@@ -1,0 +1,28 @@
+
+http://127.0.0.1:18081/  [tecnologías detectadas]
+  HTTP 200  http://127.0.0.1:18081/  (0 ms)  «Blog de ejemplo»
+  TECNOLOGÍA  CATEGORÍA              VERSIÓN  DETECCIÓN  CONFIANZA  MOTOR                                                                                              URL
+  WordPress   CMS                    6.4.2    declarada  alta       wappalyzergo v0.3.11 + mateprobe:cookie-name + mateprobe:meta-generator + mateprobe:html-resource  http://127.0.0.1:18081/
+  PHP         Programming languages  8.2.12   declarada  media      mateprobe:x-powered-by                                                                             http://127.0.0.1:18081/
+  Nginx       Web servers            1.24.0   declarada  media      wappalyzergo v0.3.11 + mateprobe:server-header                                                     http://127.0.0.1:18081/
+
+http://127.0.0.1:18082/  [tecnologías detectadas]
+  HTTP 200  http://127.0.0.1:18082/  (0 ms)  «Tienda Next»
+  TECNOLOGÍA  CATEGORÍA              VERSIÓN  DETECCIÓN  CONFIANZA    MOTOR                                                                                            URL
+  Cloudflare  CDN                    —        declarada  media        wappalyzergo v0.3.11 + mateprobe:server-header + mateprobe:header:cf-ray                         http://127.0.0.1:18082/
+  Next.js     JavaScript frameworks  —        declarada  alta         wappalyzergo v0.3.11 + mateprobe:x-powered-by + mateprobe:html-resource + mateprobe:html-marker  http://127.0.0.1:18082/
+  React       JavaScript frameworks  —        inferida   desconocida  wappalyzergo v0.3.11 (implies)                                                                   http://127.0.0.1:18082/
+  Webpack     Miscellaneous          —        inferida   desconocida  wappalyzergo v0.3.11 (implies)                                                                   http://127.0.0.1:18082/
+  Node.js     Programming languages  —        inferida   desconocida  wappalyzergo v0.3.11 (implies)                                                                   http://127.0.0.1:18082/
+
+http://127.0.0.1:18083/  [respondió, sin tecnologías detectadas]
+  HTTP 200  http://127.0.0.1:18083/  (0 ms)
+
+http://127.0.0.1:18084/  [respondió, sin tecnologías detectadas]
+  HTTP 302  http://127.0.0.1:18084/  (0 ms)
+      redirección 302 → http://otro-host.example.test:18083/  (NO seguida: out_of_scope)
+
+http://127.0.0.1:18089/  [no se pudo consultar]
+  error [connection] http://127.0.0.1:18089/: dial tcp 127.0.0.1:18089: connect: connection refused
+
+Resumen: 5 objetivos · 2 con tecnologías · 2 sin tecnologías detectadas · 1 sin respuesta · 0 incompletos · 8 tecnologías

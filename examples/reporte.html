@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta name="referrer" content="no-referrer">
+<title>Reporte mateprobe</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1a1d21;--mut:#5b6470;--line:#d9dee5;--card:#f6f8fa;--ok:#116329;--warn:#9a6700;--bad:#b42318}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1318;--fg:#e6e9ee;--mut:#9aa4b2;--line:#2a313b;--card:#171c23;--ok:#56d364;--warn:#e3b341;--bad:#ff7b72}}
+body{margin:0;padding:0 16px 48px;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto}
+h1{font-size:1.5rem;margin:1.5rem 0 .25rem}h2{font-size:1.15rem;margin:0 0 .5rem;word-break:break-all}h3{font-size:.95rem;margin:1rem 0 .4rem}
+.mut{color:var(--mut)}.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0}
+.banner{border:1px solid var(--warn);color:var(--warn);border-radius:8px;padding:10px 14px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top;word-break:break-word}
+th{color:var(--mut);font-weight:600}code{font:.85em ui-monospace,monospace}
+.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 8px;font-size:.78rem}
+.st-detected{color:var(--ok)}.st-no_technologies{color:var(--warn)}.st-unreachable,.st-incomplete{color:var(--bad)}
+.ev{margin:2px 0 0;padding-left:16px;color:var(--mut);font-size:.82rem}
+.kpis{display:flex;flex-wrap:wrap;gap:10px}.kpi{border:1px solid var(--line);border-radius:8px;padding:6px 12px}.kpi b{font-size:1.2rem;display:block}
+</style>
+</head>
+<body><main>
+<h1>Reporte mateprobe</h1>
+<p class="mut">mateprobe ejemplo · motor: wappalyzergo v0.3.11 · esquema 1.0 · 2026-11-25 12:21:23 UTC</p>
+
+
+<div class="kpis">
+<div class="kpi"><b>5</b>objetivos</div>
+<div class="kpi"><b>2</b>con tecnologías</div>
+<div class="kpi"><b>2</b>sin tecnologías detectadas</div>
+<div class="kpi"><b>1</b>no se pudieron consultar</div>
+<div class="kpi"><b>8</b>hallazgos</div>
+<div class="kpi"><b>1</b>errores</div>
+</div>
+<p class="mut">Los resultados describen el servicio o host virtual que respondió en cada consulta; no implican haber descubierto todos los sitios alojados en una IP. Las detecciones «declaradas» o «inferidas» no están verificadas de forma independiente.</p>
+
+<section class="card">
+<h2>http://127.0.0.1:18081/ <span class="badge st-detected">tecnologías detectadas</span></h2>
+
+
+
+<h3>Tecnologías</h3>
+
+<table><caption style="text-align:left;font-weight:600;padding:6px 0">CMS</caption>
+<thead><tr><th>Nombre</th><th>Versión</th><th>Detección</th><th>Confianza</th><th>Motor / regla</th><th>Evidencia</th><th>Observada en</th></tr></thead><tbody>
+<tr>
+<td><b>WordPress</b></td>
+<td>6.4.2</td><td>declarada</td><td>alta</td><td>wappalyzergo v0.3.11 &#43; mateprobe:cookie-name &#43; mateprobe:meta-generator &#43; mateprobe:html-resource</td>
+<td><ul class="ev"><li>cookie · <code>wordpress_test_cookie</code></li><li>meta · <code>generator</code>: <code>&lt;meta name=&#34;generator&#34; content=&#34;WordPress 6.4.2&#34;&gt;</code></li><li>resource · <code>/wp-includes/</code>: <code>/wp-includes/css/dist/block-library/style.min.css?ver=6.4.2</code></li><li>resource · <code>/wp-content/</code>: <code>/wp-content/themes/ejemplo/app.js</code></li></ul><div class="mut">wappalyzergo también coincidió pero no expone su evidencia; solo se muestra la de las reglas propias.</div></td>
+<td><code>http://127.0.0.1:18081/</code></td></tr>
+</tbody></table>
+
+<table><caption style="text-align:left;font-weight:600;padding:6px 0">Programming languages</caption>
+<thead><tr><th>Nombre</th><th>Versión</th><th>Detección</th><th>Confianza</th><th>Motor / regla</th><th>Evidencia</th><th>Observada en</th></tr></thead><tbody>
+<tr>
+<td><b>PHP</b></td>
+<td>8.2.12</td><td>declarada</td><td>media</td><td>mateprobe:x-powered-by</td>
+<td><ul class="ev"><li>header · <code>X-Powered-By</code>: <code>X-Powered-By: PHP/8.2.12</code></li></ul></td>
+<td><code>http://127.0.0.1:18081/</code></td></tr>
+</tbody></table>
+
+<table><caption style="text-align:left;font-weight:600;padding:6px 0">Web servers</caption>
+<thead><tr><th>Nombre</th><th>Versión</th><th>Detección</th><th>Confianza</th><th>Motor / regla</th><th>Evidencia</th><th>Observada en</th></tr></thead><tbody>
+<tr>
+<td><b>Nginx</b></td>
+<td>1.24.0</td><td>declarada</td><td>media</td><td>wappalyzergo v0.3.11 &#43; mateprobe:server-header</td>
+<td><ul class="ev"><li>header · <code>Server</code>: <code>Server: nginx/1.24.0</code></li></ul><div class="mut">wappalyzergo también coincidió pero no expone su evidencia; solo se muestra la de las reglas propias.</div></td>
+<td><code>http://127.0.0.1:18081/</code></td></tr>
+</tbody></table>
+
+
+
+
+<h3>Respuestas HTTP</h3>
+<table><thead><tr><th>Salto</th><th>URL solicitada</th><th>Estado</th><th>IP remota</th><th>Tipo</th><th>Título</th><th>ms</th><th>Redirección</th><th>TLS</th></tr></thead><tbody>
+<tr><td>0</td><td><code>http://127.0.0.1:18081/</code></td><td>200</td><td>127.0.0.1</td><td>text/html; charset=UTF-8</td><td>Blog de ejemplo</td><td>0</td>
+<td>—</td>
+<td>—</td></tr>
+</tbody></table>
+
+
+
+</section>
+
+<section class="card">
+<h2>http://127.0.0.1:18082/ <span class="badge st-detected">tecnologías detectadas</span></h2>
+
+
+
+<h3>Tecnologías</h3>
+
+<table><caption style="text-align:left;font-weight:600;padding:6px 0">CDN</caption>
+<thead><tr><th>Nombre</th><th>Versión</th><th>Detección</th><th>Confianza</th><th>Motor / regla</th><th>Evidencia</th><th>Observada en</th></tr></thead><tbody>
+<tr>
+<td><b>Cloudflare</b></td>
+<td>—</td><td>declarada</td><td>media</td><td>wappalyzergo v0.3.11 &#43; mateprobe:server-header &#43; mateprobe:header:cf-ray</td>
+<td><ul class="ev"><li>header · <code>Server</code>: <code>Server: cloudflare</code></li><li>header · <code>CF-RAY</code>: <code>CF-RAY: 8a1b2c3d4e5f6789-EZE</code></li></ul><div class="mut">wappalyzergo también coincidió pero no expone su evidencia; solo se muestra la de las reglas propias.</div></td>
+<td><code>http://127.0.0.1:18082/</code></td></tr>
+</tbody></table>
+
+<table><caption style="text-align:left;font-weight:600;padding:6px 0">JavaScript frameworks</caption>
+<thead><tr><th>Nombre</th><th>Versión</th><th>Detección</th><th>Confianza</th><th>Motor / regla</th><th>Evidencia</th><th>Observada en</th></tr></thead><tbody>
+<tr>
+<td><b>Next.js</b></td>
+<td>—</td><td>declarada</td><td>alta</td><td>wappalyzergo v0.3.11 &#43; mateprobe:x-powered-by &#43; mateprobe:html-resource &#43; mateprobe:html-marker</td>
+<td><ul class="ev"><li>header · <code>X-Powered-By</code>: <code>X-Powered-By: Next.js</code></li><li>resource · <code>/_next/static/</code>: <code>/_next/static/chunks/main.js</code></li><li>html · <code>script#__NEXT_DATA__</code>: <code>&lt;script id=&#34;__NEXT_DATA__&#34;&gt;</code></li></ul><div class="mut">wappalyzergo también coincidió pero no expone su evidencia; solo se muestra la de las reglas propias.</div></td>
+<td><code>http://127.0.0.1:18082/</code></td></tr><tr>
+<td><b>React</b></td>
+<td>—</td><td>inferida</td><td>desconocida</td><td>wappalyzergo v0.3.11 (implies)</td>
+<td><ul class="ev"><li>inference · <code>Next.js</code>: <code>Next.js implica React en la base de firmas de wappalyzergo (no observada directamente)</code></li></ul></td>
+<td><code>http://127.0.0.1:18082/</code></td></tr>
+</tbody></table>
+
+<table><caption style="text-align:left;font-weight:600;padding:6px 0">Miscellaneous</caption>
+<thead><tr><th>Nombre</th><th>Versión</th><th>Detección</th><th>Confianza</th><th>Motor / regla</th><th>Evidencia</th><th>Observada en</th></tr></thead><tbody>
+<tr>
+<td><b>Webpack</b></td>
+<td>—</td><td>inferida</td><td>desconocida</td><td>wappalyzergo v0.3.11 (implies)</td>
+<td><ul class="ev"><li>inference · <code>Next.js</code>: <code>Next.js implica Webpack en la base de firmas de wappalyzergo (no observada directamente)</code></li></ul></td>
+<td><code>http://127.0.0.1:18082/</code></td></tr>
+</tbody></table>
+
+<table><caption style="text-align:left;font-weight:600;padding:6px 0">Programming languages</caption>
+<thead><tr><th>Nombre</th><th>Versión</th><th>Detección</th><th>Confianza</th><th>Motor / regla</th><th>Evidencia</th><th>Observada en</th></tr></thead><tbody>
+<tr>
+<td><b>Node.js</b></td>
+<td>—</td><td>inferida</td><td>desconocida</td><td>wappalyzergo v0.3.11 (implies)</td>
+<td><ul class="ev"><li>inference · <code>Next.js</code>: <code>Next.js implica Node.js en la base de firmas de wappalyzergo (no observada directamente)</code></li></ul></td>
+<td><code>http://127.0.0.1:18082/</code></td></tr>
+</tbody></table>
+
+
+
+
+<h3>Respuestas HTTP</h3>
+<table><thead><tr><th>Salto</th><th>URL solicitada</th><th>Estado</th><th>IP remota</th><th>Tipo</th><th>Título</th><th>ms</th><th>Redirección</th><th>TLS</th></tr></thead><tbody>
+<tr><td>0</td><td><code>http://127.0.0.1:18082/</code></td><td>200</td><td>127.0.0.1</td><td>text/html</td><td>Tienda Next</td><td>0</td>
+<td>—</td>
+<td>—</td></tr>
+</tbody></table>
+
+
+
+</section>
+
+<section class="card">
+<h2>http://127.0.0.1:18083/ <span class="badge st-no_technologies">respondió, sin tecnologías detectadas</span></h2>
+
+
+<p class="mut">Se obtuvo respuesta, pero no se detectaron tecnologías.</p>
+
+
+
+<h3>Respuestas HTTP</h3>
+<table><thead><tr><th>Salto</th><th>URL solicitada</th><th>Estado</th><th>IP remota</th><th>Tipo</th><th>Título</th><th>ms</th><th>Redirección</th><th>TLS</th></tr></thead><tbody>
+<tr><td>0</td><td><code>http://127.0.0.1:18083/</code></td><td>200</td><td>127.0.0.1</td><td>text/plain</td><td>—</td><td>0</td>
+<td>—</td>
+<td>—</td></tr>
+</tbody></table>
+
+
+
+</section>
+
+<section class="card">
+<h2>http://127.0.0.1:18084/ <span class="badge st-no_technologies">respondió, sin tecnologías detectadas</span></h2>
+
+
+<p class="mut">Se obtuvo respuesta, pero no se detectaron tecnologías.</p>
+
+
+
+<h3>Respuestas HTTP</h3>
+<table><thead><tr><th>Salto</th><th>URL solicitada</th><th>Estado</th><th>IP remota</th><th>Tipo</th><th>Título</th><th>ms</th><th>Redirección</th><th>TLS</th></tr></thead><tbody>
+<tr><td>0</td><td><code>http://127.0.0.1:18084/</code></td><td>302</td><td>127.0.0.1</td><td>text/html; charset=utf-8</td><td>—</td><td>0</td>
+<td>302 → <code>http://otro-host.example.test:18083/</code><br><span class="mut">NO seguida: out_of_scope</span></td>
+<td>—</td></tr>
+</tbody></table>
+
+
+
+</section>
+
+<section class="card">
+<h2>http://127.0.0.1:18089/ <span class="badge st-unreachable">no se pudo consultar</span></h2>
+
+
+<p class="mut">No se pudo consultar: no hubo ninguna respuesta HTTP.</p>
+
+
+
+
+<h3>Errores</h3>
+<table><thead><tr><th>Clase</th><th>URL</th><th>Detalle</th></tr></thead><tbody>
+<tr><td>connection</td><td><code>http://127.0.0.1:18089/</code></td><td>dial tcp 127.0.0.1:18089: connect: connection refused</td></tr>
+</tbody></table>
+
+</section>
+
+</main></body></html>
