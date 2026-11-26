@@ -35,3 +35,27 @@ decide después, con el catálogo ya cubriendo los puntos 1–3.
 - Habilitar el envío de componentes `os` / `application` solo si `Catalog.Covers(eco)`.
 - Comparación de versión local con los esquemas nuevos.
 - Sección «Entorno del equipo» en el informe, separada de las dependencias del repo.
+
+## Fuentes para alimentar el catálogo (verificadas el 2026-11-26)
+Todas son públicas y responden hoy. Se proponen para que el **backend** las ingiera y las exponga con el
+contrato `dzh-security/1` (el CLI no las consulta directo, para no enviar versiones a terceros).
+
+| Qué cubre | Fuente | Formato | Notas |
+|---|---|---|---|
+| Distros (Ubuntu, Debian, Alpine, RHEL...) y sus paquetes | **OSV.dev** (`api.osv.dev`, volcado en GCS) | OSV JSON, rangos por distro | Probado: `Ubuntu:24.04:LTS` y `Debian:12` devuelven avisos. Es el que mejor encaja con `ranges`/`events` y `distro_release`. Se consulta por paquete **fuente** (`linux`, `chromium`), no por el binario. |
+| Kernel de Linux | **NVD** (CPE `o:linux:linux_kernel`, 19.8k CVE) + **kernel.org CNA** | NVD API 2.0 | Rangos por CPE. Para el kernel de distro (`6.8.0-45-generic`) conviene OSV/Ubuntu, que mapea a la versión del paquete. |
+| Chrome / Chromium | **NVD** (CPE `a:google:chrome`, 4.2k CVE) | NVD API 2.0 | Los CVE traen «prior to X.Y.Z» → rango `fixed`. Complementar con el CNA `chrome-cve-admin@google.com`. |
+| Firefox | **NVD** (CPE `a:mozilla:firefox`, 3.4k CVE) + **Mozilla MFSA** (`mozilla/foundation-security-advisories` en GitHub, YAML) | NVD / YAML | OSV no devuelve Firefox para Debian (el paquete se llama `firefox-esr`): mapear nombre. |
+| Explotación activa | **CISA KEV** (`known_exploited_vulnerabilities.json`) | JSON | Alimenta `exploitation.status`. |
+| Prioridad opcional | **EPSS** (FIRST.org) | CSV/API | Probabilidad de explotación; no es obligatorio. |
+
+Mapeo de identidades sugerido: `os/ubuntu` ↔ OSV `Ubuntu:<VERSION_ID>`, `os/debian` ↔ `Debian:<VERSION_ID>`,
+`os/linux-kernel` ↔ paquete fuente `linux` + NVD, `application/chrome` ↔ CPE `google:chrome` (+ `chromium` en OSV),
+`application/firefox` ↔ CPE `mozilla:firefox` (+ `firefox-esr` en OSV).
+
+Salvedades a resolver en el backend:
+- El kernel que reporta `uname -r` (`6.8.0-45-generic`) no es la versión del paquete (`6.8.0-45.45`): el CLI
+  debería además leer la versión del paquete (`dpkg-query -W linux-image-$(uname -r)`), pendiente de agregar.
+- OSV de Ubuntu lista CVE antiguos de `linux`: hay que usar el estado por release (`fixed`/`needed`/`not-affected`) y no
+  marcar como afectado lo que ya está corregido en el paquete instalado.
+- NVD tiene límite de peticiones sin clave: ingerir en lote y cachear, no consultar por cada auditoría.
