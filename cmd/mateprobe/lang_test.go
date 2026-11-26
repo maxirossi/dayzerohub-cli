@@ -12,7 +12,16 @@ import (
 // Los tests existentes comprueban textos en español: se fija el idioma sin importar el LANG de la máquina.
 func TestMain(m *testing.M) {
 	os.Setenv("MATEPROBE_LANG", "es")
-	os.Exit(m.Run())
+	// Aísla los tests de las credenciales reales del usuario (os.UserConfigDir).
+	home, err := os.MkdirTemp("", "mateprobe-test-home")
+	if err != nil {
+		panic(err)
+	}
+	os.Setenv("XDG_CONFIG_HOME", home)
+	os.Setenv("HOME", home)
+	code := m.Run()
+	os.RemoveAll(home)
+	os.Exit(code)
 }
 
 func TestHelpLanguages(t *testing.T) {
@@ -20,9 +29,9 @@ func TestHelpLanguages(t *testing.T) {
 		args      []string
 		want, not string
 	}{
-		{[]string{"--help"}, "detección local de tecnologías web", "local web technology detection"},
-		{[]string{"--lang", "en", "--help"}, "local web technology detection", "detección local"},
-		{[]string{"--help", "--lang=en"}, "Global option: --lang", "Opción global"},
+		{[]string{"--help"}, "escáner local de seguridad", "local security scanner"},
+		{[]string{"--lang", "en", "--help"}, "local security scanner", "escáner local"},
+		{[]string{"--help", "--lang=en"}, "Global options:", "Opciones globales"},
 	}
 	for _, c := range cases {
 		var out, errb bytes.Buffer

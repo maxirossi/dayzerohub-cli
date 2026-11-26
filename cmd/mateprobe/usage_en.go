@@ -4,15 +4,36 @@ import "github.com/maxirossi/mateprobe/i18n"
 
 // Los textos de ayuda en español viven junto a cada comando (usage, auditUsage, loginUsage); aquí están las versiones en inglés.
 
-const usageEN = `mateprobe — local web technology detection
+const usageEN = `mateprobe — local security scanner: detects web technologies and audits dependencies against DayZeroHub
 
 Usage:
-  mateprobe scan [options]
-  mateprobe login                                       (authorize this machine and store your API key; see: mateprobe logout)
-  mateprobe audit --path /path/to/project [options]     (see: mateprobe audit --help)
-  mateprobe --version | --help
+  mateprobe <command> [options]
 
-Global option: --lang es|en (also MATEPROBE_LANG; otherwise the system locale is used)
+Commands:
+  login     authorize this machine with your DayZeroHub account and store your API key
+  logout    delete the API key stored on this machine
+  audit     audit a local project (dependencies vs. DayZeroHub advisories)
+  scan      detect the technologies of websites (domains, URLs, IPs, CIDR)
+  version   show the version
+  help      show this help
+
+Global options:
+  --lang es|en      interface language (also MATEPROBE_LANG; otherwise the system locale)
+  -h, --help        help (also: mateprobe <command> --help)
+  -v, --version     version
+
+Examples:
+  mateprobe login
+  mateprobe audit --path ./my-project --open
+  mateprobe scan --target example.com
+
+More information: https://github.com/maxirossi/dayzerohub-cli
+`
+
+const scanUsageEN = `mateprobe scan — local web technology detection
+
+Usage:
+  mateprobe scan --target X [options]
 
 Targets (at least one of --target / --input):
   --target X        domain, URL, IP, CIDR or IPv4/IPv6 range (repeatable)
@@ -97,5 +118,6 @@ The key is stored in the user's config directory with 0600 permissions and is us
 `
 
 func usageText() string      { return i18n.Tr(usage, usageEN) }
+func scanUsageText() string  { return i18n.Tr(scanUsage, scanUsageEN) }
 func auditUsageText() string { return i18n.Tr(auditUsage, auditUsageEN) }
 func loginUsageText() string { return i18n.Tr(loginUsage, loginUsageEN) }

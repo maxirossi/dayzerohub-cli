@@ -41,13 +41,36 @@ type multi []string
 func (m *multi) String() string     { return strings.Join(*m, ",") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
-const usage = `mateprobe — detección local de tecnologías web
+const usage = `mateprobe — escáner local de seguridad: detecta tecnologías web y audita dependencias contra DayZeroHub
 
 Uso:
-  mateprobe scan [opciones]
-  mateprobe login                                       (autoriza este equipo y guarda tu API key; ver: mateprobe logout)
-  mateprobe audit --path /ruta/al/proyecto [opciones]   (ver: mateprobe audit --help)
-  mateprobe --version | --help
+  mateprobe <comando> [opciones]
+
+Comandos:
+  login     autoriza este equipo con tu cuenta de DayZeroHub y guarda tu API key
+  logout    borra la API key guardada en este equipo
+  audit     audita un proyecto local (dependencias vs. avisos de DayZeroHub)
+  scan      detecta las tecnologías de sitios web (dominios, URLs, IPs, CIDR)
+  version   muestra la versión
+  help      muestra esta ayuda
+
+Opciones globales:
+  --lang es|en      idioma de la interfaz (también MATEPROBE_LANG; si no, el del sistema)
+  -h, --help        ayuda (también: mateprobe <comando> --help)
+  -v, --version     versión
+
+Ejemplos:
+  mateprobe login
+  mateprobe audit --path ./mi-proyecto --open
+  mateprobe scan --target ejemplo.com
+
+Más información: https://github.com/maxirossi/dayzerohub-cli
+`
+
+const scanUsage = `mateprobe scan — detección local de tecnologías web
+
+Uso:
+  mateprobe scan --target X [opciones]
 
 Objetivos (al menos uno de --target / --input):
   --target X        dominio, URL, IP, CIDR o rango IPv4/IPv6 (repetible)
@@ -123,7 +146,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 func runScan(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("scan", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	fs.Usage = func() { fmt.Fprint(stderr, usageText()) }
+	fs.Usage = func() { fmt.Fprint(stderr, scanUsageText()) }
 	var (
 		tgt, inputs, excl, ports, resolve, allow multi
 		maxAddr                                  = fs.Int("max-addresses", targets.DefaultMaxAddresses, "")

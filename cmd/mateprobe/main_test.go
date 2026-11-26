@@ -33,8 +33,11 @@ func TestVersionAndHelp(t *testing.T) {
 	if c, o, _ := do("--version"); c != 0 || !strings.HasPrefix(o, "mateprobe ") {
 		t.Fatalf("%d %q", c, o)
 	}
-	if c, o, _ := do("--help"); c != 0 || !strings.Contains(o, "Códigos de salida") {
+	if c, o, _ := do("--help"); c != 0 || !strings.Contains(o, "Comandos:") {
 		t.Fatalf("%d", c)
+	}
+	if c, _, e := do("scan", "--help"); c != 0 || !strings.Contains(e, "Códigos de salida") {
+		t.Fatalf("%d %q", c, e)
 	}
 	if c, _, _ := do(); c != exitUsage {
 		t.Fatal(c)

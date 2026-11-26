@@ -33,16 +33,45 @@ reports/
 | Windows x86-64 / ARM64 | `mateprobe-<versión>-windows-amd64.exe` / `-windows-arm64.exe` |
 | macOS Intel / Apple Silicon | `mateprobe-<versión>-darwin-amd64` / `-darwin-arm64` |
 
+#### Linux
+
 ```bash
-sha256sum -c SHA256SUMS --ignore-missing                       # opcional: verificar integridad
-mkdir -p ~/.local/bin
-install mateprobe-0.1.0-linux-amd64 ~/.local/bin/mateprobe     # Linux/macOS, sin sudo
+V=0.1.0; ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')   # amd64 o arm64
+BASE=https://github.com/maxirossi/dayzerohub-cli/releases/download/v$V
+curl -fLO $BASE/mateprobe-$V-linux-$ARCH && curl -fLO $BASE/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing                  # verificar integridad
+mkdir -p ~/.local/bin && install mateprobe-$V-linux-$ARCH ~/.local/bin/mateprobe
 mateprobe --version
 ```
 
-> **`mateprobe: no se encontró la orden`:** el binario no está en el `PATH`. Si `~/.local/bin` no está, agregalo a `~/.bashrc` o `~/.zshrc`: `export PATH="$HOME/.local/bin:$PATH"`. Para instalar para todo el sistema: `sudo install <binario> /usr/local/bin/mateprobe`.
+#### macOS
 
-> **macOS:** los binarios no están firmados; Gatekeeper puede pedir aprobación manual (`xattr -d com.apple.quarantine <archivo>`).
+```bash
+V=0.1.0; ARCH=$(uname -m | sed 's/x86_64/amd64/')          # amd64 (Intel) o arm64 (Apple Silicon)
+BASE=https://github.com/maxirossi/dayzerohub-cli/releases/download/v$V
+curl -fLO $BASE/mateprobe-$V-darwin-$ARCH && curl -fLO $BASE/SHA256SUMS
+shasum -a 256 -c SHA256SUMS --ignore-missing              # verificar integridad
+xattr -d com.apple.quarantine mateprobe-$V-darwin-$ARCH   # los binarios no están firmados
+mkdir -p ~/.local/bin && install mateprobe-$V-darwin-$ARCH ~/.local/bin/mateprobe
+mateprobe --version
+```
+
+#### Windows (PowerShell)
+
+```powershell
+$V = "0.1.0"; $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
+$Base = "https://github.com/maxirossi/dayzerohub-cli/releases/download/v$V"
+Invoke-WebRequest "$Base/mateprobe-$V-windows-$Arch.exe" -OutFile mateprobe.exe
+Invoke-WebRequest "$Base/SHA256SUMS" -OutFile SHA256SUMS
+Get-FileHash mateprobe.exe -Algorithm SHA256          # comparar con la línea de windows-$Arch en SHA256SUMS
+New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\mateprobe" | Out-Null
+Move-Item -Force mateprobe.exe "$env:LOCALAPPDATA\mateprobe\mateprobe.exe"
+[Environment]::SetEnvironmentVariable("Path", "$([Environment]::GetEnvironmentVariable('Path','User'));$env:LOCALAPPDATA\mateprobe", "User")
+```
+
+Abrí una terminal nueva y ejecutá `mateprobe --version`. Si SmartScreen avisa, el binario no está firmado todavía.
+
+> **`mateprobe: no se encontró la orden`:** el binario no está en el `PATH`. Si `~/.local/bin` no está, agregalo a `~/.bashrc` o `~/.zshrc`: `export PATH="$HOME/.local/bin:$PATH"`. Para instalar para todo el sistema: `sudo install <binario> /usr/local/bin/mateprobe`.
 
 Después:
 
