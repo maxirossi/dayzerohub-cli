@@ -91,6 +91,8 @@ Discovery (what is walked):
 
 Optional outputs:
   --export-dir DIR  writes inventory.json, inventory.csv, findings.json and coverage.json (0600)
+  --host            adds the machine to the inventory: distro, kernel and browsers (Linux only; reads
+                    /etc/os-release and runs "<browser> --version"; not yet sent to the API)
 
 Maven (by default only a static read of pom.xml; nothing is executed):
   --maven-resolve   EXPLICIT MODE: runs "mvn dependency:tree" to get the effective tree.

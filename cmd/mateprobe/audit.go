@@ -28,6 +28,7 @@ import (
 	"github.com/maxirossi/mateprobe/dzh"
 	"github.com/maxirossi/mateprobe/i18n"
 	"github.com/maxirossi/mateprobe/inventory"
+	"github.com/maxirossi/mateprobe/inventory/host"
 )
 
 const auditUsage = `mateprobe audit — inventario local de un proyecto y cruce con avisos de DayZeroHub
@@ -55,6 +56,8 @@ Descubrimiento (qué se recorre):
 
 Salidas opcionales:
   --export-dir DIR  escribe inventory.json, inventory.csv, findings.json y coverage.json (0600)
+  --host            incluye en el inventario el equipo: distribución, kernel y navegadores (solo Linux; lee
+                    /etc/os-release y ejecuta "<navegador> --version"; todavía no se consulta a la API)
 
 Maven (por defecto solo lectura estática de pom.xml; no se ejecuta nada):
   --maven-resolve   MODO EXPLÍCITO: ejecuta "mvn dependency:tree" para obtener el árbol efectivo.
@@ -104,6 +107,7 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 		mvnResolve = fs.Bool("maven-resolve", false, "")
 		mvnBin     = fs.String("maven-bin", "", "")
 		mvnTimeout = fs.Duration("maven-timeout", 0, "")
+		hostInv    = fs.Bool("host", false, "")
 	)
 	fs.Var(&excludes, "exclude", "")
 	fs.Var(&includes, "include", "")
@@ -171,6 +175,12 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 			return exitInterrupted
 		}
 		return fail(err)
+	}
+	if *hostInv {
+		h := host.Collect(ctx, host.Default())
+		inv.Components = append(inv.Components, h.Components...)
+		inv.Limitations = append(inv.Limitations, h.Limitations...)
+		fmt.Fprintf(stderr, i18n.Tr("Host: %d componentes (SO, kernel, aplicaciones). Por ahora solo se listan en el inventario; no se envían a la API.\n", "Host: %d components (OS, kernel, applications). For now they are only listed in the inventory; they are not sent to the API.\n"), len(h.Components))
 	}
 	fmt.Fprintf(stderr, i18n.Tr("Inventario: %d subproyectos, %d componentes (%d directorios omitidos). Consultando DayZeroHub ...\n", "Inventory: %d subprojects, %d components (%d directories skipped). Querying DayZeroHub ...\n"), len(inv.Subprojects), len(inv.Components), len(inv.Omitted))
 

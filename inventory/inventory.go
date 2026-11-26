@@ -26,6 +26,8 @@ const (
 	KindLibrary   = "biblioteca"
 	KindCMS       = "CMS"
 	KindPlugin    = "plugin"
+	KindOS        = "sistema operativo"
+	KindApp       = "aplicación"
 )
 
 // Estados de la versión.
@@ -49,6 +51,8 @@ const (
 	EcoGo       = "go"
 	EcoWP       = "wordpress"
 	EcoMaven    = "maven"
+	EcoOS       = "os"          // distribución y kernel del host (audit --host)
+	EcoApp      = "application" // aplicaciones instaladas en el host (audit --host)
 )
 
 // Ámbito de uso de una dependencia.
