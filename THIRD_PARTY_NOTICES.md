@@ -13,18 +13,15 @@ Además se enlaza la biblioteca estándar de Go (BSD-3-Clause).
 
 Las dependencias solo de prueba/desarrollo de wappalyzergo (p. ej. `go-rod`, `testify`) **no** forman parte del binario.
 
-## ⚠️ Pendiente de decisión: licencia de las firmas de tecnologías
+## Licencia de mateprobe y de las firmas de tecnologías
 
-- El **código** de `wappalyzergo` es MIT.
-- Pero la **base de firmas** que embebe (`fingerprints_data.json`) se genera, según su propia herramienta `cmd/update-fingerprints`, a partir de:
+- **mateprobe se distribuye bajo GNU GPL v3.0** (ver [`LICENSE`](LICENSE)). Decisión tomada el 2026-11-25.
+- El **código** de `wappalyzergo` es MIT (compatible con GPL-3.0; su aviso se conserva abajo).
+- La **base de firmas** que embebe (`fingerprints_data.json`) se genera, según su propia herramienta `cmd/update-fingerprints`, a partir de:
   - `github.com/enthec/webappanalyzer` — licencia **GPL-3.0** (según la API de GitHub, consultada el 2026-11-25)
   - `github.com/HTTPArchive/wappalyzer` — licencia **GPL-3.0** (ídem)
-- Distribuir un binario que embebe datos derivados de fuentes GPL-3.0 **puede imponer obligaciones GPL** (entrega del código fuente, licenciar el conjunto bajo GPL-3.0, avisos). Esto no está resuelto en este MVP y **no se eligió licencia para mateprobe**.
-- Opciones a evaluar por el titular antes de publicar binarios:
-  1. Licenciar mateprobe bajo GPL-3.0 y cumplir sus obligaciones.
-  2. Uso estrictamente interno/local (sin distribuir el binario) mientras se decide.
-  3. Reemplazar la base de firmas por una propia o de licencia permisiva, conservando las reglas propias de `detect/rules.go` (que son de este proyecto).
-  4. Consultar a asesoría legal.
+- Por eso el conjunto (binario y código) se licencia bajo GPL-3.0 y se cumplen sus obligaciones: el **código fuente completo** de cada versión está disponible en <https://github.com/maxirossi/dayzerohub-cli> (la etiqueta `vX.Y.Z` corresponde al binario del release), se conservan los avisos de copyright y esta atribución, y quien redistribuya el binario debe ofrecer también las fuentes bajo la misma licencia.
+- Si en el futuro se reemplaza la base de firmas por una propia o permisiva, la licencia del proyecto podrá reevaluarse.
 
 Las **reglas propias** (`detect/rules.go`) son código original de este proyecto y no incorporan firmas de terceros.
 

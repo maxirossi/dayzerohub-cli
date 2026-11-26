@@ -1,6 +1,8 @@
 # mateprobe
 
-Detecta las tecnologías de sitios web (servidor, lenguaje, CMS, frameworks, CDN, analytics…) **desde tu máquina**, a partir de dominios, URLs, IPs, CIDR o rangos de IPs. Un único ejecutable: no requiere Go, Docker, Node ni base de datos, y `scan` no envía nada a terceros (el subcomando `audit` solo consulta la API de DayZeroHub; ver [Auditoría de proyectos](#auditoría-de-proyectos-audit)).
+**Español** · [English](README.en.md)
+
+Detecta las tecnologías de sitios web (servidor, lenguaje, CMS, frameworks, CDN, analytics…) **desde tu máquina**, a partir de dominios, URLs, IPs, CIDR o rangos de IPs. Un único ejecutable: no requiere Go, Docker, Node ni base de datos, y `scan` no envía nada a terceros (los subcomandos `login` y `audit` solo hablan con DayZeroHub; ver [Inicio rápido](#inicio-rápido) y [Auditoría de proyectos](#auditoría-de-proyectos-audit)).
 
 Cada hallazgo indica **qué evidencia lo respalda y cuánto se puede confiar en él**; no solo un nombre. Pensado como insumo para MateAudit (ver [Integración](#integración-con-mateaudit)).
 
@@ -8,7 +10,7 @@ Cada hallazgo indica **qué evidencia lo respalda y cuánto se puede confiar en 
 
 ## Instalación
 
-Descargá el binario de tu plataforma (carpeta `dist/`, ver `make dist`) y ejecutalo:
+Descargá el binario de tu plataforma desde la página de [**Releases**](https://github.com/maxirossi/dayzerohub-cli/releases/latest) y ejecutalo. No requiere Go, Docker, Node ni base de datos.
 
 | Sistema | Archivo |
 |---|---|
@@ -22,20 +24,32 @@ sha256sum -c SHA256SUMS --ignore-missing # opcional: verificar integridad
 ./mateprobe-0.1.0-linux-amd64 --version
 ```
 
+Conviene renombrarlo a `mateprobe` y dejarlo en el `PATH` (p. ej. `sudo mv mateprobe-0.1.0-linux-amd64 /usr/local/bin/mateprobe`).
+
 En macOS los binarios no están firmados: Gatekeeper puede pedir aprobación manual (`xattr -d com.apple.quarantine <archivo>`).
 
-### Iniciar sesión (`login`)
+## Inicio rápido
 
 ```bash
-mateprobe login    # muestra un link y un código; lo aprobás en tu cuenta de DayZeroHub y la key queda guardada
-mateprobe logout   # borra la key local (revocala también en el panel: "API técnica")
+mateprobe login                                  # autoriza este equipo con tu cuenta de DayZeroHub
+mateprobe audit --path ./mi-proyecto --open      # audita un proyecto local y abre el informe
+mateprobe scan --target ejemplo.com              # detecta las tecnologías de un sitio
 ```
 
-La key personal (`dzh_…`) se guarda en el directorio de configuración del usuario con permisos 0600 y `audit` la usa si no hay `api_key` en el entorno o el `.env`. Solo vale para la API técnica; el feed editorial usa otra clave opcional (`news_api_key`).
+`mateprobe login` te muestra un link y un código. Abrí el link con tu sesión de [DayZeroHub](https://dayzerohub.site/app) (hace falta una cuenta registrada y verificada), confirmá el código y la terminal recibe una **API key personal** que queda guardada en tu equipo. Se administra (y se revoca) desde la sección **API técnica** del panel. `mateprobe logout` borra la key local.
+
+### Idioma
+
+La interfaz está en **español e inglés**: `--lang es|en` (opción global), la variable `MATEPROBE_LANG` o, si no hay ninguna, el idioma del sistema (`LANG`). Por defecto, español. Aplica a la ayuda, los mensajes, la salida de `scan` y el informe de `audit`.
+
+```bash
+mateprobe --lang en audit --path ./my-project
+MATEPROBE_LANG=en mateprobe scan --target example.com
+```
 
 ### Compilar desde el código
 
-Requiere Go ≥ 1.27 (solo para compilar).
+Requiere Go ≥ 1.27 (solo para compilar). Repositorio: <https://github.com/maxirossi/dayzerohub-cli>.
 
 ```bash
 make check     # gofmt + go vet + go test -race
@@ -207,15 +221,17 @@ Los symlinks no se siguen por defecto; con `--follow-symlinks` solo si el destin
 
 ### Configuración
 
-Copiá `.env.example` a `.env` y completá la clave real (`.env` está en `.gitignore`):
+Con `mateprobe login` no hace falta archivo de configuración. Si preferís (o necesitás) configurarlo a mano, copiá `.env.example` a `.env` y completá los valores (`.env` está en `.gitignore`):
 
 ```
 api_key=REEMPLAZAR_CON_LA_CLAVE_REAL
 report_format=html
+news_api_key=OPCIONAL
 ```
 
 - Los nombres van **en minúsculas**. El archivo se lee como texto: no se ejecuta ni se expande nada (`$(...)`, `$VAR` y comillas invertidas quedan literales). No se usa `source`.
-- **`api_key`**: variable de entorno del proceso → archivo `.env`. Si falta, se pide por terminal (`Ingresá tu API key de DayZeroHub:`) **sin mostrar los caracteres**. No se guarda, no se imprime y no existe un flag para pasarla por argumento.
+- **`api_key`** (API técnica): variable de entorno del proceso → archivo `.env` → key guardada por `mateprobe login` → pregunta por terminal (`Ingresá tu API key de DayZeroHub:`) **sin mostrar los caracteres**. Nunca se imprime y no existe un flag para pasarla por argumento. Lo normal es no configurar nada: `mateprobe login` alcanza.
+- **`news_api_key`** (opcional): clave del feed editorial (`/v1/news`), que es **otra API con otra clave**. La key de `login` solo vale para la API técnica; sin `news_api_key` el feed editorial se omite con un aviso y el informe se genera igual con los datos técnicos.
 - **Formato**: `--format` > variable de entorno `report_format` > archivo `.env` > pregunta interactiva (Enter = HTML). Un valor inválido es un error, no se ignora.
 - Sin terminal interactiva y con datos faltantes, el comando termina con un mensaje claro (no queda esperando).
 - Este `.env` es **tu configuración**; nunca se busca ni se carga el `.env` del proyecto analizado.
@@ -245,14 +261,14 @@ Además se consulta el **feed editorial** (`/news`) como complemento (WordPress,
 
 ### API de DayZeroHub
 
-Una sola `api_key` (cabecera `X-API-Key`, nunca en la query) para las cuatro URLs, definidas como constantes en `dzh/client.go` sobre `https://dayzerohub.site`:
+Las claves viajan en la cabecera `X-API-Key` (nunca en la query). Las rutas `/api/v1/security/*` usan la `api_key` personal (la de `login`); `/api/v1/news` usa `news_api_key`. Las URLs son constantes en `dzh/client.go` sobre `https://dayzerohub.site`:
 
 | Método y ruta | Uso |
 |---|---|
 | `GET /api/v1/security/catalog` | Alcance (ecosistemas) y frescura del catálogo técnico |
 | `POST /api/v1/security/packages/lookup` | Avisos por identidad, en lotes de ≤100 componentes (`limit` 100 por componente, `next_cursor` por componente, reintento solo de los `error`) |
 | `GET /api/v1/security/advisories` | Catálogo técnico paginado por cursor opaco (método `Advisories`; el informe no lo necesita) |
-| `GET /api/v1/news?lang=es` | Feed editorial: `{items,page,page_size,max_pages}`, hasta 5 páginas de 20 |
+| `GET /api/v1/news?lang=es` | (con `news_api_key`) Feed editorial: `{items,page,page_size,max_pages}`, hasta 5 páginas de 20 |
 
 El cliente (`net/http`) usa timeout, cancela con Ctrl+C, limita el tamaño de la respuesta, reintenta 429/5xx/red con backoff exponencial y jitter (respetando `Retry-After`, hasta 30 s), **no reintenta 401** (los 401 repetidos pueden banear la IP; ante un 401 se cortan todas las consultas y se genera el informe parcial), no reenvía `X-API-Key` a otro origen en una redirección y tolera campos extra o `null` (contrato `dzh-security/1`). Si algo falla se genera igualmente un **informe parcial** con el inventario local y el estado «Consulta de vulnerabilidades no completada». **Privacidad:** a la API técnica solo viaja ecosistema + nombre del paquete; jamás versiones, rutas ni contenido de archivos.
 
@@ -280,7 +296,7 @@ Al terminar se muestra el estado, un resumen, la ruta absoluta y un enlace **«A
 
 Códigos de salida de `audit`: `0` completo · `1` error de uso/configuración · `2` informe parcial (consulta incompleta) · `130` interrumpido con Ctrl+C.
 
-Ejemplos generados desde fixtures: [`examples/audit-informe.html`](examples/audit-informe.html) y [`examples/audit-informe.md`](examples/audit-informe.md) (`make examples`).
+Ejemplos generados desde fixtures: [`examples/audit-informe.html`](examples/audit-informe.html) y [`examples/audit-informe.md`](examples/audit-informe.md) (`make examples`). El informe sale en el idioma activo (`--lang`).
 
 ### No soportado todavía
 
@@ -321,8 +337,7 @@ Alternativa sin código: consumir `--format json` (`schema_version` permite dete
 - El rate limit es global con ráfaga 1; el timeout se aplica por solicitud, incluidas las de redirección.
 - IPv6 con zona (`fe80::1%eth0`) no está soportado.
 - Los binarios de Windows y macOS se **compilan** con `make dist` pero en este desarrollo solo se **ejecutó** el de Linux x86-64.
-- No hay versión de licencia del proyecto definida todavía (ver notas de licencias).
 
-## Licencias
+## Licencia
 
-Ver [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). **Atención:** el código de wappalyzergo es MIT, pero la base de firmas que embebe proviene de repositorios GPL-3.0; hay que revisar esto antes de distribuir los binarios.
+mateprobe se distribuye bajo la **GNU General Public License v3.0** ([`LICENSE`](LICENSE)). El motor de detección embebe una base de firmas derivada de repositorios GPL-3.0, por lo que el conjunto se licencia bajo la misma licencia; el código fuente de cada versión está en este repositorio (la etiqueta `vX.Y.Z` corresponde al binario del release). Atribuciones de terceros en [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
