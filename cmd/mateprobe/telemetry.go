@@ -38,7 +38,11 @@ func reportUsage(cl *dzh.Client, ev dzh.UsageEvent) {
 	if !telemetryEnabled() || !strings.HasPrefix(cl.APIKey, "dzh_") {
 		return
 	}
-	ev.ClientVersion, ev.OS, ev.Arch, ev.Command = version, runtime.GOOS, runtime.GOARCH, "audit"
+	v := version
+	if len(v) > 20 { // el servidor acepta hasta 20 caracteres (builds de desarrollo: v0.1.0-3-gabc123-dirty)
+		v = v[:20]
+	}
+	ev.ClientVersion, ev.OS, ev.Arch, ev.Command = v, runtime.GOOS, runtime.GOARCH, "audit"
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	_ = cl.ReportUsage(ctx, ev)
