@@ -56,8 +56,9 @@ Descubrimiento (qué se recorre):
 
 Salidas opcionales:
   --export-dir DIR  escribe inventory.json, inventory.csv, findings.json y coverage.json (0600)
-  --host            incluye en el inventario el equipo: distribución, kernel y navegadores (solo Linux; lee
-                    /etc/os-release y ejecuta "<navegador> --version"; se consulta a la API solo si el catálogo cubre su ecosistema)
+  --host            incluye en el inventario el equipo: sistema operativo, kernel (Linux) y navegadores
+                    (Linux, macOS y Windows; lee /etc/os-release, sw_vers, "ver", el registro de Windows y
+                    "<navegador> --version"; se consulta a la API solo si el catálogo cubre su ecosistema)
 
 Maven (por defecto solo lectura estática de pom.xml; no se ejecuta nada):
   --maven-resolve   MODO EXPLÍCITO: ejecuta "mvn dependency:tree" para obtener el árbol efectivo.
