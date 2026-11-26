@@ -73,6 +73,21 @@ func distroMatches(rowDistro string, c inventory.Component) bool {
 	return false
 }
 
+// applicableToLocalDistro es false si todas las filas del aviso para el componente son de distros distintas a la local.
+func applicableToLocalDistro(c inventory.Component, adv dzh.SecAdvisory) bool {
+	seen := false
+	for _, a := range adv.Affected {
+		if !strings.EqualFold(a.Name, c.Name) || a.Ecosystem != ecosystemOf(c) {
+			continue
+		}
+		seen = true
+		if d, _ := a.Extra["distro"].(string); distroMatches(d, c) {
+			return true
+		}
+	}
+	return !seen // sin filas del componente: se deja pasar y Evaluate lo informa como siempre
+}
+
 // Queryable indica si un componente se consulta en la API técnica: solo
 // paquetes (no runtimes) de ecosistemas con identidad estándar.
 func Queryable(c inventory.Component) bool {
@@ -618,6 +633,9 @@ func Technical(comps []inventory.Component, sec dzh.SecurityResult) TechResult {
 				if !byAdvID[m.ID].from[identity(u.Ecosystem, u.Name)] {
 					continue
 				}
+				if !applicableToLocalDistro(c, m) {
+					continue // aviso solo de otras distros: no aplica a este equipo (no es «no determinado»)
+				}
 				d := Evaluate(c, m)
 				all = append(all, d)
 			}
@@ -662,6 +680,9 @@ func Technical(comps []inventory.Component, sec dzh.SecurityResult) TechResult {
 	// 4) Contadores por aviso, unidad y ocurrencia.
 	for _, root := range gorder {
 		g := groups[root]
+		if len(g.Units) == 0 {
+			continue // ningún componente local al que aplique (p. ej. avisos solo de otras distros)
+		}
 		out.Groups = append(out.Groups, *g)
 		s.Advisories++
 		switch g.Result {

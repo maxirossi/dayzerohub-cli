@@ -295,3 +295,24 @@ func TestDistroMatches(t *testing.T) {
 		t.Error("sin distro local no debe aplicar una fila de distro")
 	}
 }
+
+func TestApplicableToLocalDistro(t *testing.T) {
+	c := inventory.Component{Name: "linux-kernel", Ecosystem: inventory.EcoOS, Notes: []string{"distro=ubuntu:24.04"}}
+	mk := func(distros ...string) dzh.SecAdvisory {
+		var adv dzh.SecAdvisory
+		for _, d := range distros {
+			a := dzh.Affected{Ecosystem: "DZH:OS", Name: "linux-kernel"}
+			if d != "" {
+				a.Extra = map[string]any{"distro": d}
+			}
+			adv.Affected = append(adv.Affected, a)
+		}
+		return adv
+	}
+	if applicableToLocalDistro(c, mk("Ubuntu:22.04:LTS", "Debian:12")) {
+		t.Error("avisos solo de otras distros no deben aplicar")
+	}
+	if !applicableToLocalDistro(c, mk("Ubuntu:22.04:LTS", "Ubuntu:24.04:LTS")) || !applicableToLocalDistro(c, mk("")) {
+		t.Error("distro local o fila sin distro sí aplican")
+	}
+}
