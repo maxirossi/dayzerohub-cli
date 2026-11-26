@@ -48,6 +48,8 @@ func ecosystemOf(c inventory.Component) string {
 		return "Go"
 	case inventory.EcoMaven:
 		return "Maven"
+	case inventory.EcoOS, inventory.EcoApp:
+		return c.Ecosystem // identidades del host: "os" / "application" (propuesta docs/propuesta-api-host.md)
 	}
 	return ""
 }

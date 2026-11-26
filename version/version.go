@@ -17,7 +17,7 @@ var ErrUnsupported = errors.New("esquema de versiones no soportado")
 // Supported indica si hay comparador para el esquema.
 func Supported(scheme string) bool {
 	switch scheme {
-	case "semver", "composer", "wordpress", "maven":
+	case "semver", "composer", "wordpress", "maven", "dpkg", "numeric":
 		return true
 	}
 	return false
@@ -32,6 +32,10 @@ func Compare(scheme, a, b string) (int, error) {
 		return compareComposer(a, b)
 	case "maven":
 		return compareMaven(a, b)
+	case "dpkg":
+		return compareDpkg(a, b)
+	case "numeric":
+		return compareNumeric(a, b)
 	}
 	return 0, fmt.Errorf("%w: %q", ErrUnsupported, scheme)
 }

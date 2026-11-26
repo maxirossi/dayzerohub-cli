@@ -57,7 +57,7 @@ Descubrimiento (qué se recorre):
 Salidas opcionales:
   --export-dir DIR  escribe inventory.json, inventory.csv, findings.json y coverage.json (0600)
   --host            incluye en el inventario el equipo: distribución, kernel y navegadores (solo Linux; lee
-                    /etc/os-release y ejecuta "<navegador> --version"; todavía no se consulta a la API)
+                    /etc/os-release y ejecuta "<navegador> --version"; se consulta a la API solo si el catálogo cubre su ecosistema)
 
 Maven (por defecto solo lectura estática de pom.xml; no se ejecuta nada):
   --maven-resolve   MODO EXPLÍCITO: ejecuta "mvn dependency:tree" para obtener el árbol efectivo.
@@ -180,7 +180,7 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 		h := host.Collect(ctx, host.Default())
 		inv.Components = append(inv.Components, h.Components...)
 		inv.Limitations = append(inv.Limitations, h.Limitations...)
-		fmt.Fprintf(stderr, i18n.Tr("Host: %d componentes (SO, kernel, aplicaciones). Por ahora solo se listan en el inventario; no se envían a la API.\n", "Host: %d components (OS, kernel, applications). For now they are only listed in the inventory; they are not sent to the API.\n"), len(h.Components))
+		fmt.Fprintf(stderr, i18n.Tr("Host: %d componentes (SO, kernel, aplicaciones). Se consultan a la API solo si el catálogo cubre su ecosistema.\n", "Host: %d components (OS, kernel, applications). They are sent to the API only if the catalog covers their ecosystem.\n"), len(h.Components))
 	}
 	fmt.Fprintf(stderr, i18n.Tr("Inventario: %d subproyectos, %d componentes (%d directorios omitidos). Consultando DayZeroHub ...\n", "Inventory: %d subprojects, %d components (%d directories skipped). Querying DayZeroHub ...\n"), len(inv.Subprojects), len(inv.Components), len(inv.Omitted))
 
@@ -421,6 +421,7 @@ func querySecurity(ctx context.Context, cl *dzh.Client, comps []inventory.Compon
 	} else {
 		si.Catalog = &cat
 	}
+	comps = withoutUncoveredHost(comps, si.Catalog)
 	ids := correlate.LookupComponents(comps)
 	if len(ids) == 0 {
 		return si, false
@@ -442,4 +443,18 @@ func querySecurity(ctx context.Context, cl *dzh.Client, comps []inventory.Compon
 func isUnauthorized(err error) bool {
 	var e *dzh.Error
 	return errors.As(err, &e) && e.Status == http.StatusUnauthorized
+}
+
+// withoutUncoveredHost quita los componentes del host (os, application) cuyo
+// ecosistema el catálogo no declara cubierto: así no se envían a la API hasta
+// que el backend los soporte. Sin catálogo (error), tampoco se envían.
+func withoutUncoveredHost(comps []inventory.Component, cat *dzh.Catalog) []inventory.Component {
+	out := make([]inventory.Component, 0, len(comps))
+	for _, c := range comps {
+		if (c.Ecosystem == inventory.EcoOS || c.Ecosystem == inventory.EcoApp) && (cat == nil || !cat.Covers(c.Ecosystem)) {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
 }
