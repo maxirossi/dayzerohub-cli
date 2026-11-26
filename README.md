@@ -1,430 +1,394 @@
-# mateprobe
+<div align="center">
+  <img src="docs/assets/dayzerohub.svg" alt="DayZeroHub" width="72" height="90">
+  <h1>DayZeroHub CLI</h1>
+  <p><strong>Auditoría de dependencias, desde tu proyecto hasta el informe.</strong></p>
+  <p>
+    <a href="https://github.com/maxirossi/dayzerohub-cli/releases/latest"><img src="https://img.shields.io/github/v/release/maxirossi/dayzerohub-cli?color=01A78B" alt="Última versión"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-010F26" alt="GPL-3.0"></a>
+    <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-010F26" alt="Linux, macOS, Windows">
+  </p>
+  <p><strong>Español</strong> · <a href="README.en.md">English</a></p>
+</div>
+**Conocé las dependencias de tu proyecto y qué avisos de seguridad requieren tu atención.** `mateprobe`, el ejecutable de DayZeroHub CLI, analiza una carpeta local, consulta la API de DayZeroHub y genera un informe HTML o Markdown con hallazgos, evidencia y límites de cobertura.
 
-**Español** · [English](README.en.md)
+[DayZeroHub](https://dayzerohub.site/) publica novedades sobre vulnerabilidades de criticidad media, alta y crítica. Podés registrarte, seguir tecnologías como PHP y recibir novedades por Telegram, email, Slack u otros canales habilitados en tu cuenta. El CLI lleva esos datos al contexto de tu proyecto: inventaría sus dependencias y evalúa las versiones localmente.
 
-**Un CLI de un solo ejecutable.** Escribí `mateprobe audit` y lee tu proyecto, inventaría sus dependencias, las cruza con los avisos de [DayZeroHub](https://dayzerohub.site) y te devuelve un informe de qué te afecta de verdad. Con `mateprobe scan` detecta las tecnologías de cualquier sitio, desde tu máquina.
+**Un ejecutable · Sin Go, Node ni Docker para usarlo · Informes en español e inglés**
 
-Cada hallazgo dice **qué evidencia lo respalda y cuánto se puede confiar en él**, no solo un nombre. Sin Go, Docker, Node ni base de datos.
+[Instalación](#instalación) · [Primer informe](#primer-informe) · [Ecosistemas](#ecosistemas-compatibles) · [Ejemplos](#ejemplos-de-uso) · [Escanear sitios](#detectar-tecnologías-de-un-sitio-sin-cuenta) · [Privacidad](#privacidad) · [Ayuda](#solución-de-problemas)
 
-> mateprobe es **pasivo**: hace `GET` normales y lee lo que el sitio responde. No enumera directorios, no hace fuerza bruta ni prueba vulnerabilidades. Usalo solo sobre sistemas propios o con autorización.
-
-```
-mateprobe login                                  # autoriza este equipo con tu cuenta de DayZeroHub
-mateprobe audit --path ./mi-proyecto --open      # audita un proyecto local y abre el informe
-mateprobe scan --target ejemplo.com              # detecta las tecnologías de un sitio
-```
-
-```
-reports/
-└── mi-proyecto-20260101-120000.html   informe autocontenido, sin JS ni recursos externos
---export-dir/
-├── inventory.json / inventory.csv     todos los componentes detectados
-├── findings.json                      avisos y su evaluación
-└── coverage.json                      qué se analizó y qué no (con el motivo)
+```bash
+mateprobe login
+mateprobe audit --path "./mi-proyecto" --format html --open
 ```
 
 ## Instalación
 
-**Requiere:** solo el binario. Descargalo desde [**Releases**](https://github.com/maxirossi/dayzerohub-cli/releases/latest).
+Necesitás el ejecutable para tu sistema, una cuenta de DayZeroHub verificada y conexión a Internet para autorizar el equipo y consultar los avisos. El análisis de archivos se realiza en tu máquina.
 
-| Sistema | Archivo |
-|---|---|
-| Linux x86-64 / ARM64 | `mateprobe-<versión>-linux-amd64` / `-linux-arm64` |
-| Windows x86-64 / ARM64 | `mateprobe-<versión>-windows-amd64.exe` / `-windows-arm64.exe` |
-| macOS Intel / Apple Silicon | `mateprobe-<versión>-darwin-amd64` / `-darwin-arm64` |
-
-#### Linux
-
-```bash
-V=0.1.0; ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')   # amd64 o arm64
-BASE=https://github.com/maxirossi/dayzerohub-cli/releases/download/v$V
-curl -fLO $BASE/mateprobe-$V-linux-$ARCH && curl -fLO $BASE/SHA256SUMS
-sha256sum -c SHA256SUMS --ignore-missing                  # verificar integridad
-mkdir -p ~/.local/bin && install mateprobe-$V-linux-$ARCH ~/.local/bin/mateprobe
-mateprobe --version
-```
-
-#### macOS
-
-```bash
-V=0.1.0; ARCH=$(uname -m | sed 's/x86_64/amd64/')          # amd64 (Intel) o arm64 (Apple Silicon)
-BASE=https://github.com/maxirossi/dayzerohub-cli/releases/download/v$V
-curl -fLO $BASE/mateprobe-$V-darwin-$ARCH && curl -fLO $BASE/SHA256SUMS
-shasum -a 256 -c SHA256SUMS --ignore-missing              # verificar integridad
-xattr -d com.apple.quarantine mateprobe-$V-darwin-$ARCH   # los binarios no están firmados
-mkdir -p ~/.local/bin && install mateprobe-$V-darwin-$ARCH ~/.local/bin/mateprobe
-mateprobe --version
-```
-
-#### Windows (PowerShell)
-
-```powershell
-$V = "0.1.0"; $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
-$Base = "https://github.com/maxirossi/dayzerohub-cli/releases/download/v$V"
-Invoke-WebRequest "$Base/mateprobe-$V-windows-$Arch.exe" -OutFile mateprobe.exe
-Invoke-WebRequest "$Base/SHA256SUMS" -OutFile SHA256SUMS
-Get-FileHash mateprobe.exe -Algorithm SHA256          # comparar con la línea de windows-$Arch en SHA256SUMS
-New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\mateprobe" | Out-Null
-Move-Item -Force mateprobe.exe "$env:LOCALAPPDATA\mateprobe\mateprobe.exe"
-[Environment]::SetEnvironmentVariable("Path", "$([Environment]::GetEnvironmentVariable('Path','User'));$env:LOCALAPPDATA\mateprobe", "User")
-```
-
-Abrí una terminal nueva y ejecutá `mateprobe --version`. Si SmartScreen avisa, el binario no está firmado todavía.
-
-> **`mateprobe: no se encontró la orden`:** el binario no está en el `PATH`. Si `~/.local/bin` no está, agregalo a `~/.bashrc` o `~/.zshrc`: `export PATH="$HOME/.local/bin:$PATH"`. Para instalar para todo el sistema: `sudo install <binario> /usr/local/bin/mateprobe`.
-
-Después:
-
-```
-mateprobe login
-```
-
-`mateprobe login` te muestra un link y un código. Abrí el link con tu sesión de [DayZeroHub](https://dayzerohub.site/app) (hace falta una cuenta registrada y verificada), confirmá el código y la terminal recibe una **API key personal** que queda guardada en tu equipo. Se administra (y se revoca) desde la sección **API técnica** del panel. `mateprobe logout` borra la key local.
+Los bloques siguientes instalan **v0.1.0** desde [Releases](https://github.com/maxirossi/dayzerohub-cli/releases/latest), verifican el SHA-256 antes de instalar y no requieren permisos de administrador. Elegí tu sistema:
 
 <details>
-<summary>Compilar desde el código</summary>
+<summary><strong>Linux / macOS — copiar y pegar en Bash o Zsh</strong></summary>
 
-Requiere Go ≥ 1.27 (solo para compilar). Repositorio: <https://github.com/maxirossi/dayzerohub-cli>.
+Detecta Intel/AMD de 64 bits o ARM64 y deja el comando en `~/.local/bin/mateprobe`. Requiere `curl` y las herramientas de checksum del sistema.
 
 ```bash
-make check       # gofmt + go vet + go test -race
-make build       # dist/mateprobe para tu plataforma
-make dist        # 6 binarios + SHA256SUMS en dist/
-make examples    # regenera examples/ desde servidores locales y fixtures
-make build-linux # dist/mateprobe-<versión>-linux-amd64
+(
+  set -eu
+  dzh_version="0.1.0"
+  case "$(uname -s)" in
+    Linux) dzh_os="linux" ;;
+    Darwin) dzh_os="darwin" ;;
+    *) echo "Unsupported OS" >&2; exit 1 ;;
+  esac
+  case "$(uname -m)" in
+    x86_64) dzh_arch="amd64" ;;
+    aarch64|arm64) dzh_arch="arm64" ;;
+    *) echo "Unsupported architecture" >&2; exit 1 ;;
+  esac
+  dzh_asset="mateprobe-${dzh_version}-${dzh_os}-${dzh_arch}"
+  dzh_base="https://github.com/maxirossi/dayzerohub-cli/releases/download/v${dzh_version}"
+  dzh_tmp="$(mktemp -d)"
+  trap 'rm -rf "$dzh_tmp"' EXIT
+  cd "$dzh_tmp"
+  curl -fsSLO "$dzh_base/$dzh_asset"
+  curl -fsSLO "$dzh_base/SHA256SUMS"
+  awk -v file="$dzh_asset" '$2 == file {print}' SHA256SUMS > checksum.txt
+  test "$(wc -l < checksum.txt | tr -d ' ')" = "1"
+  if [ "$dzh_os" = "linux" ]; then
+    sha256sum -c checksum.txt
+  else
+    shasum -a 256 -c checksum.txt
+  fi
+  mkdir -p "$HOME/.local/bin"
+  install -m 755 "$dzh_asset" "$HOME/.local/bin/mateprobe"
+  "$HOME/.local/bin/mateprobe" --version
+)
+[ "$?" -eq 0 ] && export PATH="$HOME/.local/bin:$PATH"
+```
+
+El bloque habilita el comando en esta terminal. Para conservarlo en próximas sesiones, agregá esta línea a `~/.bashrc` si usás Bash, o a `~/.zshrc` si usás Zsh:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 </details>
 
-## Uso
+<details>
+<summary><strong>Windows — copiar y pegar en PowerShell</strong></summary>
 
+Detecta x64 o ARM64, instala en `%LOCALAPPDATA%\mateprobe` y agrega el comando al `PATH` del usuario y de la sesión actual.
+
+```powershell
+& {
+  $ErrorActionPreference = "Stop"
+  $DzhVersion = "0.1.0"
+  $DzhMachine = $env:PROCESSOR_ARCHITECTURE
+  if ($env:PROCESSOR_ARCHITEW6432) { $DzhMachine = $env:PROCESSOR_ARCHITEW6432 }
+  $DzhArch = switch ($DzhMachine) {
+    "AMD64" { "amd64" }
+    "ARM64" { "arm64" }
+    default { throw "Unsupported architecture: $DzhMachine" }
+  }
+  $DzhAsset = "mateprobe-$DzhVersion-windows-$DzhArch.exe"
+  $DzhBase = "https://github.com/maxirossi/dayzerohub-cli/releases/download/v$DzhVersion"
+  $DzhDir = Join-Path $env:LOCALAPPDATA "mateprobe"
+  $DzhTmp = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
+  New-Item -ItemType Directory -Path $DzhTmp | Out-Null
+  try {
+    $DzhBinary = Join-Path $DzhTmp $DzhAsset
+    $DzhSums = Join-Path $DzhTmp "SHA256SUMS"
+    Invoke-WebRequest "$DzhBase/$DzhAsset" -OutFile $DzhBinary
+    Invoke-WebRequest "$DzhBase/SHA256SUMS" -OutFile $DzhSums
+    $DzhPattern = '^[a-fA-F0-9]{64}\s+\*?' + [regex]::Escape($DzhAsset) + '$'
+    $DzhLines = @(Get-Content $DzhSums | Where-Object { $_ -match $DzhPattern })
+    if ($DzhLines.Count -ne 1) { throw "Missing or ambiguous SHA256 entry" }
+    $DzhExpected = ($DzhLines[0] -split '\s+')[0]
+    if ((Get-FileHash $DzhBinary -Algorithm SHA256).Hash -ne $DzhExpected) {
+      throw "SHA256 mismatch: installation stopped"
+    }
+    New-Item -ItemType Directory -Force -Path $DzhDir | Out-Null
+    Copy-Item $DzhBinary (Join-Path $DzhDir "mateprobe.exe") -Force
+    $DzhUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if (($DzhUserPath -split ';') -notcontains $DzhDir) {
+      [Environment]::SetEnvironmentVariable("Path", "$DzhUserPath;$DzhDir", "User")
+    }
+    if (($env:Path -split ';') -notcontains $DzhDir) { $env:Path += ";$DzhDir" }
+    & (Join-Path $DzhDir "mateprobe.exe") --version
+  } finally {
+    Remove-Item -LiteralPath $DzhTmp -Recurse -Force
+  }
+}
 ```
-mateprobe audit --path ./proyecto                          # audita un proyecto local
-mateprobe audit --path ./proyecto --format md --output ./informe.md
-mateprobe audit --path ./proyecto --export-dir ./out       # inventario y hallazgos completos
-mateprobe audit --path ./proyecto --maven-resolve          # modo Maven efectivo (opt-in)
 
-mateprobe scan --target ejemplo.com                        # un dominio
-mateprobe scan --target 192.168.1.0/24 --exclude 192.168.1.1
-mateprobe scan --input objetivos.txt --format html --output reporte.html
+</details>
 
-mateprobe --lang en audit --path ./my-project              # idioma: es | en (o MATEPROBE_LANG)
+<details>
+<summary>Descarga manual: elegir el ejecutable</summary>
+
+Los nombres de archivo corresponden a v0.1.0. `amd64` sirve para procesadores Intel y AMD de 64 bits; `arm64`, para ARM de 64 bits.
+
+| Sistema | Intel / AMD de 64 bits | ARM64 |
+| --- | --- | --- |
+| Linux | [Descargar](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-linux-amd64) | [Descargar](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-linux-arm64) |
+| macOS | [Intel](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-darwin-amd64) | [Apple Silicon](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-darwin-arm64) |
+| Windows | [Descargar .exe](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-windows-amd64.exe) | [Descargar .exe](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-windows-arm64.exe) |
+
+Compará el SHA-256 del archivo con su entrada en [SHA256SUMS](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/SHA256SUMS) antes de ejecutarlo: `sha256sum ARCHIVO` en Linux, `shasum -a 256 ARCHIVO` en macOS o `Get-FileHash ARCHIVO -Algorithm SHA256` en PowerShell. Luego renombralo a `mateprobe` (`mateprobe.exe` en Windows). En Linux/macOS, dale permiso con `chmod +x mateprobe`.
+
+Podés ejecutarlo desde esa carpeta con `./mateprobe --version` o `.\mateprobe.exe --version`, respectivamente. Usá ese mismo prefijo para los comandos de esta guía si no lo agregaste al `PATH`.
+
+</details>
+
+> La release v0.1.0 publica binarios para los tres sistemas, pero indica que macOS y Windows todavía no fueron probados. Los binarios de macOS no están firmados; el sistema puede pedir una revisión antes de ejecutarlos.
+
+## Primer informe
+
+### 1. Creá tu cuenta y autorizá el equipo
+
+[Registrate en DayZeroHub](https://dayzerohub.site/app/register?lang=es), verificá tu cuenta y ejecutá:
+
+```bash
+mateprobe login
 ```
 
-Funciona con estos ecosistemas:
+Se abre el navegador y la terminal muestra un enlace y un código. Confirmá ese código con tu sesión de DayZeroHub. Si el navegador no se abre, copiá el enlace. La API key personal queda guardada en tu equipo; no necesitás crear un `.env`.
 
-| Tipo | Archivos | Extracción |
-|------|----------|------------|
-| JavaScript/TypeScript | `package.json`, `package-lock.json`, `yarn.lock` | Workspaces, versión resuelta vs. rango, directas/transitivas |
-| Java | `pom.xml` | Reactor, parents, BOM; modo efectivo con `--maven-resolve` |
-| PHP | `composer.json`, `composer.lock` | Laravel, Symfony y otros |
-| Go | `go.mod`, `go.work` | Módulos y `replace` |
-| WordPress | `wp-includes/version.php`, `wp-content/plugins/*` | Core y plugins |
-| Sitios web | dominios, URLs, IPs, CIDR, rangos | Cabeceras, cookies, `<meta>`, recursos HTML, firmas |
+### 2. Elegí la carpeta que querés auditar
 
-## Qué obtenés
+Reemplazá `./mi-proyecto` por la ruta de tu proyecto. Puede contener varios servicios o workspaces.
 
-**Avisos únicos** - uno por aviso, con los alias CVE/GHSA unificados y sus ocurrencias (servicio, ámbito, lockfile, vía).
+```bash
+mateprobe audit --path "./mi-proyecto" --format html --open
+```
 
-**Evaluación local de versiones** - la decisión *dentro / fuera del rango* se toma en tu máquina; a la API solo viaja ecosistema + nombre del paquete, nunca versiones, rutas ni archivos.
+El comando lee los manifiestos y lockfiles compatibles, consulta los avisos por paquete y compara las versiones en tu máquina. **En el modo predeterminado no instala dependencias ni ejecuta código del proyecto.**
 
-**Prioridad determinista** - certeza → explotación conocida (CISA KEV) → severidad → EPSS → uso en producción → CVSS. Lo que falta se muestra como «no disponible», nunca como 0.
+### 3. Revisá el informe
 
-**Cobertura honesta** - todo lo que no se pudo analizar aparece con su motivo. El informe nunca afirma que un proyecto sea seguro.
+Se guarda en `./reports/<proyecto>-<fecha>.html`, relativo al directorio desde el que ejecutaste el comando, y se abre en el navegador. La terminal también muestra la ruta y un enlace para abrirlo.
 
-**Privacidad** - no se guardan valores de cookies ni tokens, las URLs ocultan credenciales y no se carga el `.env` del proyecto auditado.
+| En el informe | Para qué sirve |
+| --- | --- |
+| Resumen y prioridades | Ver qué revisar primero según la evaluación, severidad y explotación conocida disponible. |
+| Avisos y evidencia | Consultar identificadores CVE/GHSA, componente, versión y fuente del hallazgo. |
+| Ubicaciones | Encontrar el servicio, manifiesto o lockfile involucrado y, cuando está disponible, la dependencia de origen. |
+| Cobertura | Distinguir lo evaluado de versiones desconocidas, archivos omitidos y ecosistemas sin datos. |
+| Acciones sugeridas | Orientar una actualización cuando hay datos suficientes; el CLI no la ejecuta. |
 
-**Resumen de uso** - al terminar un `audit` con la key de `login`, se envía un resumen mínimo para el panel de DayZeroHub (lo ve solo el administrador): versión de mateprobe, sistema operativo y arquitectura, completo/parcial, un identificador de proyecto (hash de 12 caracteres, no reversible a la ruta) y **solo conteos** (componentes, avisos, afectados, indeterminados, fuera de rango). El servidor además ve tu IP y deriva el país. **Nunca** se envían rutas, nombres de proyecto o de paquetes, versiones ni los avisos encontrados. Para desactivarlo: `MATEPROBE_TELEMETRY=off`.
+**[Ver informe de ejemplo en Markdown](examples/audit-informe.md)** · [HTML de ejemplo](examples/audit-informe.html) — datos ficticios de prueba, no una auditoría real. Para ver el HTML renderizado, descargalo y abrilo en tu navegador.
 
-Cada tecnología de `scan` se etiqueta `declared`, `signature` o `inferred`, con su `confidence`: siempre sabés qué se observó y qué se dedujo.
+> Una versión dentro del rango afectado requiere revisión; no demuestra que tu aplicación sea explotable. «Sin avisos encontrados» describe los datos consultados, no garantiza que el proyecto sea seguro.
 
-## Stack
+## Ecosistemas compatibles
 
-Go + wappalyzergo + `net/http`. Un binario estático, sin servidor, corre completamente en local (`scan` no envía nada a terceros; `login` y `audit` solo hablan con DayZeroHub).
+| Ecosistema | Archivos analizados | Alcance |
+| --- | --- | --- |
+| JavaScript / TypeScript | `package.json`, `package-lock.json` v1–v3, `yarn.lock` Classic/Berry | Workspaces, dependencias directas y transitivas, versiones resueltas y ámbito de uso. |
+| PHP / Composer | `composer.json`, `composer.lock` | Paquetes de Composer, incluidos Laravel y Symfony; dependencias de producción y desarrollo. |
+| Java / Maven | `pom.xml` | Lectura estática de módulos, parents, BOM y dependencias directas. Resolución efectiva opcional. |
+| Go | `go.mod`, `go.work` | Módulos, versiones declaradas y reemplazos. No reconstruye el grafo resuelto ejecutando Go. |
+| WordPress local | `wp-includes/version.php`, `wp-content/plugins/*` | Inventario del core y plugins. Avisos editoriales opcionales; sin cobertura del catálogo técnico de WordPress. |
 
----
+Los lockfiles permiten distinguir una versión resuelta de un rango declarado como `^1.0.0`. Si faltan datos suficientes para comparar, el resultado queda **«No determinado»**.
 
-# Referencia
+**Límites actuales:** pnpm se detecta, pero sus lockfiles y workspaces no se resuelven; se usan las declaraciones de `package.json`. Tampoco se analizan `npm-shrinkwrap.json`, Python, Gradle, Ruby, Rust, .NET, temas o mu-plugins de WordPress. La cobertura de avisos depende del catálogo de DayZeroHub y se refleja en el informe.
 
-## Uso detallado
+## Ejemplos de uso
+
+**Guardar un informe HTML en una ubicación elegida:**
+
+```bash
+mateprobe audit --path "./mi-proyecto" --format html --output "./informes/auditoria.html" --open
+```
+
+**Generar Markdown:**
+
+```bash
+mateprobe audit --path "./mi-proyecto" --format md --output "./informes/auditoria.md"
+```
+
+**Exportar el detalle completo además del informe:**
+
+```bash
+mateprobe audit --path "./mi-proyecto" --format html --export-dir "./detalle"
+```
+
+| Archivo exportado | Contenido |
+| --- | --- |
+| `inventory.json` / `inventory.csv` | Inventario completo de componentes. |
+| `findings.json` | Hallazgos técnicos y evaluación de versiones. |
+| `coverage.json` | Cobertura del análisis y sus limitaciones. |
+
+**Excluir una carpeta:**
+
+```bash
+mateprobe audit --path "./mi-proyecto" --format html --exclude "/legacy/"
+```
+
+Por defecto se respetan `.gitignore` y `.git/info/exclude`, y se omiten dependencias instaladas, cachés y carpetas generadas como `node_modules`, `vendor`, `dist`, `build` y `target`. Los archivos ya trackeados por Git no se descartan por una regla de `.gitignore`; las exclusiones predeterminadas y `--exclude` siguen aplicándose.
+
+**Cambiar el idioma de la interfaz y el informe:**
+
+```bash
+mateprobe --lang es audit --path "./mi-proyecto" --format html --open
+mateprobe --lang en audit --path "./mi-proyecto" --format html --open
+```
+
+También podés definir `MATEPROBE_LANG=es` o `MATEPROBE_LANG=en` como variable de entorno.
+
+<details>
+<summary>Maven: incluir el árbol efectivo de dependencias</summary>
+
+El modo predeterminado lee `pom.xml` sin ejecutar Maven; las transitivas y los parents/BOM que no puede resolver quedan pendientes. Para obtener el árbol efectivo, necesitás Maven y un JDK instalados:
+
+```bash
+mateprobe audit --path "./backend" --format html --maven-resolve --open
+```
+
+Este modo **ejecuta `mvn dependency:tree` y puede descargar artefactos y ejecutar plugins o extensiones del proyecto**. Es opcional; no usa `./mvnw`. Si falla, el informe conserva el análisis estático y muestra la limitación.
+
+Podés ajustar `--maven-bin`, `--maven-timeout` (por defecto `10m`) y `--maven-profile` (repetible).
+
+</details>
+
+## Configuración opcional
+
+Con `mateprobe login` y `--format html` ya podés empezar. Para fijar preferencias, creá un archivo de configuración separado del proyecto, por ejemplo `~/.config/mateprobe/audit.env` en Linux/macOS:
+
+```dotenv
+report_format=html
+# Solo si preferís una API key manual en lugar de la guardada por login:
+# api_key=TU_API_KEY_TECNICA
+# Opcional, para complementar con el feed editorial (usa otra clave):
+# news_api_key=TU_API_KEY_EDITORIAL
+```
+
+```bash
+mateprobe audit --path "./mi-proyecto" --env-file "$HOME/.config/mateprobe/audit.env" --open
+```
+
+En Windows podés guardar ese archivo donde prefieras y pasar su ruta con `--env-file`.
+
+| Valor | Prioridad, de mayor a menor |
+| --- | --- |
+| API key técnica | Variable de entorno `api_key` → archivo de configuración → clave de `login` → pregunta oculta en terminal. |
+| Formato | `--format` → variable de entorno `report_format` → archivo de configuración → pregunta interactiva (Enter elige HTML). |
+
+Los nombres `api_key`, `news_api_key` y `report_format` van **en minúsculas**. El archivo se lee como texto; no ejecuta comandos ni expande variables. No guardes claves en el repositorio.
+
+Sin `--env-file`, se intenta leer `./.env` **del directorio actual**. No se busca un `.env` a partir de `--path`; si ejecutás desde la carpeta auditada, ambos directorios coinciden. Usá un archivo explícito si querés separar la configuración del CLI de la aplicación.
+
+La clave personal de `login` sirve para la API técnica. `news_api_key` es opcional y corresponde al feed editorial; su ausencia no impide el informe técnico. En una ejecución sin terminal interactiva, configurá la clave y el formato de antemano.
+
+<details>
+<summary>Referencia de opciones de auditoría</summary>
+
+| Opción | Uso |
+| --- | --- |
+| `--path RUTA` | Carpeta a analizar; obligatoria. |
+| `--format html` / `--format md` | Formato del informe. |
+| `--output RUTA` | Archivo o directorio de destino. Un archivo explícito se sobrescribe; el nombre automático conserva los informes anteriores. |
+| `--open` | Abrir el informe con la aplicación predeterminada. |
+| `--env-file ARCHIVO` | Archivo de configuración del CLI. |
+| `--export-dir DIR` | Exportar inventario, hallazgos técnicos y cobertura. |
+| `--exclude PATRÓN` | Excluir rutas con sintaxis `.gitignore`; repetible. |
+| `--include PATRÓN` | Reincorporar rutas omitidas; preferí patrones anclados como `/carpeta/`. Repetible. |
+| `--no-gitignore` | No aplicar las reglas de `.gitignore`. |
+| `--no-default-excludes` | Desactivar exclusiones predeterminadas; `.git` nunca se recorre. |
+| `--ignore-git-index` | No usar el índice de Git para reconocer archivos trackeados. |
+| `--follow-symlinks` | Seguir enlaces dentro de la raíz auditada, sin ciclos. |
+
+Precedencia de exclusiones: predeterminadas → `.gitignore` → `--exclude` → `--include`. Para consultar todas las opciones disponibles en tu versión:
+
+```bash
+mateprobe audit --help
+```
+
+</details>
+
+## Detectar tecnologías de un sitio (sin cuenta)
+
+`scan` no necesita cuenta, API key ni `login`, y **no envía nada a DayZeroHub**: consulta el sitio directamente desde tu equipo. Es pasivo (hace `GET` normales; no enumera directorios ni prueba vulnerabilidades). Usalo solo sobre sistemas propios o con autorización.
 
 ```bash
 mateprobe scan --target ejemplo.com
-mateprobe scan --target https://ejemplo.com/blog
-mateprobe scan --target 192.168.1.20
 mateprobe scan --target 192.168.1.0/24 --exclude 192.168.1.1
-mateprobe scan --target 192.168.1.10-192.168.1.30
-mateprobe scan --input objetivos.txt --concurrency 5 --rate 5
-mateprobe scan --target https://ejemplo.com --resolve ejemplo.com:443:192.168.1.20
-mateprobe scan --target ejemplo.com --format json --output resultado.json
 mateprobe scan --input objetivos.txt --format html --output reporte.html
 ```
 
-Los resultados van a **stdout** (o a `--output`); el progreso y los avisos, a **stderr** (`--quiet` los oculta).
+Cada tecnología indica cómo se detectó (`declared`, `signature` o `inferred`), su confianza y la evidencia. Acepta dominios, URLs, IPs, CIDR y rangos; formatos `table`, `json`, `csv` y `html`. Todas las opciones: `mateprobe scan --help`. Detalle completo en la [referencia técnica](docs/REFERENCIA.md).
 
-### Objetivos
+## Comandos y ayuda
 
-| Entrada | Qué hace |
-|---|---|
-| `ejemplo.com`, `1.2.3.4`, `2001:db8::1` | Prueba `http://…:80` y `https://…:443` (más los `--port`) |
-| `ejemplo.com:8080` | Prueba `http` y `https` en ese puerto |
-| `https://ejemplo.com:8443/ruta?q=1` | Respeta esquema, puerto, ruta y query tal cual |
-| `192.168.1.0/24`, `2001:db8::/120` | CIDR (IPv4/IPv6) |
-| `192.168.1.10-192.168.1.30` | Rango inclusivo (IPv4 o IPv6) |
-| `--input archivo.txt` | Un objetivo por línea; se ignoran vacías y `# comentarios` |
+`mateprobe --help` lista los comandos (`login`, `logout`, `audit`, `scan`) y `mateprobe <comando> --help` muestra las opciones de cada uno. La [referencia técnica](docs/REFERENCIA.md) cubre `scan`, la correlación de avisos, Maven, la API de DayZeroHub y la integración con MateAudit.
 
-- **Límite de tamaño:** 256 direcciones por ejecución (también IPv6). El tamaño se valida *antes* de expandir (un `/8` o `::/0` se rechaza al instante, sin consumir memoria). Para ampliarlo hay que pedirlo: `--max-addresses 1024`. Se cuentan todas las direcciones del rango, incluidas red y broadcast.
-- **Exclusiones** (`--exclude`, repetible): IP, CIDR o dominio. Un dominio excluye también sus subdominios. Se reaplican en cada redirección.
-- **Dedupe:** `Ejemplo.COM`, `ejemplo.com.` y `ejemplo.com` son el mismo objetivo; en cambio `http://` vs `https://`, otro puerto, otra ruta u otro hostname se conservan por separado.
-- **Puertos adicionales** para objetivos sin esquema, indicando el protocolo: `--port http:8080 --port https:8443`.
+## Privacidad
 
-### Dominio, IP, Host y SNI
+| Operación | Qué se comparte con DayZeroHub |
+| --- | --- |
+| Consulta de avisos | Ecosistema y nombre de cada paquete consultado. La comparación de versiones ocurre localmente; no se suben versiones, rutas ni contenido de archivos. |
+| `login` | Un nombre de instalación basado en `usuario@equipo` para identificar la autorización. La contraseña se introduce en el portal, no en el CLI. |
+| Resumen de uso | En `main`, posterior a v0.1.0: versión del CLI, sistema/arquitectura, estado, conteos y un identificador derivado de un hash de la ruta. Se asocia a la cuenta cuando se usa una clave personal. |
 
-`--resolve host:puerto:ip` (repetible, como `curl --resolve`) conecta a la IP indicada **manteniendo** el `Host` HTTP, el SNI TLS y la validación del certificado contra el dominio:
+El resumen de uso no contiene nombres de paquetes, rutas en texto, versiones de dependencias ni avisos concretos. El servidor recibe la IP y puede derivar el país. **Esto es independiente de la consulta de avisos, que sí envía nombres de paquetes.**
+
+Para desactivar el resumen de uso, definí la variable de entorno `MATEPROBE_TELEMETRY=off` (`export MATEPROBE_TELEMETRY=off` en Bash/Zsh; `$env:MATEPROBE_TELEMETRY="off"` en PowerShell). No desactiva las consultas necesarias para la auditoría.
+
+Los informes se guardan localmente. El HTML es autocontenido, sin JavaScript ni recursos externos. Puede incluir rutas y dependencias: revisalo antes de compartirlo.
+
+Para borrar la credencial guardada en este equipo:
 
 ```bash
-mateprobe scan --target https://ejemplo.com --resolve ejemplo.com:443:192.168.1.20
+mateprobe logout
 ```
 
-Las redirecciones a otro puerto necesitan su propia regla (p. ej. `ejemplo.com:80:IP` además de `:443:`).
+Para invalidar esa clave también en el servidor, revocala desde **API técnica** en el [panel de DayZeroHub](https://dayzerohub.site/app).
 
-Una consulta por IP describe **solo el servicio o virtual host que respondió**; no implica haber descubierto todos los sitios alojados en esa IP.
+## Solución de problemas
 
-### TLS
-
-Se valida el certificado por defecto. `--insecure` lo desactiva de forma explícita y queda marcado en el reporte (`tls_validation_disabled`, banner en el HTML, aviso en stderr). **Nunca** hay reintento silencioso sin validar.
-
-### Redirecciones
-
-- Se siguen las del **mismo hostname** (incluido HTTP → HTTPS), hasta `--max-redirects` (5).
-- Las que van a **otro hostname** se registran pero no se siguen, salvo `--follow-external-redirects` o `--allow-host dominio` (incluye subdominios).
-- Cada salto cuenta para el rate limit y reaplica exclusiones.
-- Cada respuesta de la cadena se analiza por separado y las tecnologías llevan la URL y el hostname donde se observaron. Lo hallado en **otro hostname** se marca `external: true` y **no** cuenta para el estado del objetivo.
-
-### Opciones
-
-| Opción | Defecto | |
-|---|---|---|
-| `--concurrency N` | 5 | objetivos en paralelo |
-| `--rate R` | 5 | solicitudes/seg **globales** (incluye redirecciones); `0` = sin límite |
-| `--timeout D` | 10s | por solicitud |
-| `--max-redirects N` | 5 | |
-| `--max-body BYTES` | 2097152 | cuerpo **descomprimido** leído por respuesta (2 MiB) |
-| `--max-addresses N` | 256 | |
-| `--format F` | `table` | `table`, `json`, `csv`, `html` |
-| `--output ARCHIVO` | stdout | |
-| `--quiet` | | sin progreso en stderr |
-
-User-Agent: `mateprobe/<versión> (+https://github.com/maxirossi/mateprobe)`. Ctrl+C cancela con elegancia: se emiten los resultados ya completados.
+| Situación | Qué revisar |
+| --- | --- |
+| `mateprobe: command not found` / comando no reconocido | Revisá el `PATH` de instalación o ejecutá el binario por su ruta completa. En Linux/macOS: `"$HOME/.local/bin/mateprobe" --version`. En PowerShell: `& "$env:LOCALAPPDATA\mateprobe\mateprobe.exe" --version`. |
+| El checksum no coincide | No instales ese archivo; volvé a descargar el binario y `SHA256SUMS` de la misma release. |
+| Código de login vencido | Ejecutá `mateprobe login` de nuevo y confirmá el código vigente. |
+| API key rechazada / HTTP 401 | Revisá si `api_key` del entorno o del archivo está reemplazando la clave guardada. Corregila o volvé a autorizar con `mateprobe login`. |
+| Falta configuración en CI o con salida redirigida | Proporcioná `api_key` mediante los secretos del entorno y agregá `--format html` o `--format md`. |
+| Feed editorial omitido | Es opcional. En v0.1.0, omitirlo puede devolver código `2` aunque la consulta técnica esté completa. Configurá `news_api_key` si necesitás incluirlo. |
+| `--open` no abre el navegador | El informe se conserva. Abrilo desde la ruta indicada; en Linux, comprobá que exista `xdg-open` y haya una sesión gráfica. |
+| Informe parcial / «No determinado» | Revisá cobertura, versiones sin resolver y errores de consulta antes de sacar conclusiones. |
 
 ### Códigos de salida
 
 | Código | Significado |
-|---|---|
-| `0` | Todos los objetivos respondieron |
-| `1` | Error de uso, configuración, entrada o salida |
-| `2` | Resultado **parcial**: algún objetivo sin respuesta o incompleto, pero otros sí respondieron |
-| `3` | Ningún objetivo respondió |
-| `130` | Interrumpido con Ctrl+C (se emiten los resultados completados) |
+| --- | --- |
+| `0` | Consulta completada; **puede haber vulnerabilidades y limitaciones de cobertura**. |
+| `1` | Error de uso, configuración, lectura o escritura. |
+| `2` | Informe parcial por consulta incompleta; en v0.1.0 también ocurre al omitir el feed editorial. |
+| `130` | Interrupción con Ctrl+C; si ocurre durante el inventario, puede no generarse un informe. |
 
-Un objetivo "responde" si al menos una de sus sondas obtuvo respuesta HTTP (aunque sea 404/500). Un fallo en `:80` o `:443` por separado no cuenta como objetivo caído; queda en `errors`.
+El código de salida indica el estado de la ejecución, no la severidad de los hallazgos. No funciona como un umbral de bloqueo por vulnerabilidades en CI.
 
-## Qué significa cada resultado
+<details>
+<summary>Compilar desde el código fuente</summary>
 
-Estados de un objetivo (`status`):
-
-- `detected`: se detectaron tecnologías.
-- `no_technologies`: **se obtuvo respuesta**, pero no se detectó nada.
-- `unreachable`: **no se pudo consultar** (ninguna respuesta; ver `errors`: `dns`, `connection`, `timeout`, `tls`, `http`, `other`).
-- `incomplete`: la ejecución se interrumpió antes de terminar el objetivo.
-
-Cada tecnología trae:
-
-| Campo | Valores |
-|---|---|
-| `detection` | `declared` (la respuesta lo afirma, p. ej. `Server: nginx/1.24.0`), `signature` (una firma coincidió), `inferred` (deducida de otra; **nunca observada directamente**) |
-| `confidence` | `high`, `medium`, `low` o `unknown` (cuando no hay regla que lo justifique) |
-| `version` | solo si hay evidencia; vacío si no se conoce |
-| `engine` | motor/regla responsable (`wappalyzergo v0.3.11`, `mateprobe:server-header`…) |
-| `evidence` | fragmento sanitizado y acotado (cabecera, nombre de cookie, `<meta>`, recurso) |
-| `url`, `host`, `external` | respuesta concreta donde se observó |
-
-Criterios de confianza de las reglas propias: **declarada** → `medium` (el servidor lo afirma pero no se verifica de forma independiente y puede estar ocultado o falseado); **firma de una sola señal** → `low`/`medium` según su especificidad; **dos o más fuentes distintas y compatibles** (p. ej. `<meta generator>` + `/wp-includes/` + cookie) suben un nivel; **inferencias** nunca suben.
-
-Qué **no** se concluye: React no implica Node.js · WordPress no confirma MySQL (las bases de datos y SO que deduce la base de firmas se descartan) · Cloudflare no identifica el servidor de origen · una versión declarada no está verificada.
-
-> **Evidencia de wappalyzergo:** el motor solo devuelve `nombre[:versión]` y categorías; **no expone qué patrón coincidió ni una confianza**. Esas detecciones salen con `confidence: unknown`, sin evidencia y con una nota explícita (`evidence_note`). Las reglas propias (cabeceras, cookies, meta generator, recursos HTML) sí devuelven su evidencia. Las tecnologías que el motor marca como *implicadas* por otra (WordPress ⇒ PHP) se registran como `inferred`; si una técnica propia la observó directamente, gana la observación.
-
-### Privacidad de los reportes
-
-No se guardan valores de cookies (solo nombres; `Set-Cookie` aparece como `nombre=[redactado]`), ni `Authorization`/tokens. Las URLs ocultan credenciales embebidas y valores de parámetros con aspecto sensible (`token`, `key`, `password`, `session`…). El texto remoto se limpia de caracteres de control y se acota.
-
-## Formatos de salida
-
-- **table**: legible en terminal.
-- **json**: `schema_version: "1.0"`. Separa `targets[].responses` (respuestas HTTP observadas), `targets[].technologies` (hallazgos) y `targets[].errors`. Ver `examples/resultado.json`.
-- **csv**: una fila por tecnología con referencia al objetivo (`target_input`, `target`, `status`, `url`…). Los objetivos sin tecnologías o sin respuesta aparecen con las columnas de tecnología vacías, y `status` las distingue. Las celdas que empiezan con `= + - @` se neutralizan contra inyección de fórmulas.
-- **html**: reporte estático, autocontenido, **sin JavaScript ni recursos externos** (con CSP restrictivo). Todo dato remoto se escapa; nunca se renderiza HTML remoto.
-
-Ejemplos generados desde fixtures locales (`make examples`): [`examples/resultado.json`](examples/resultado.json), [`examples/resultado.csv`](examples/resultado.csv), [`examples/reporte.html`](examples/reporte.html), [`examples/resultado.txt`](examples/resultado.txt).
-
-## Auditoría de proyectos (`audit`)
-
-`mateprobe audit` analiza un **proyecto local**, identifica sus tecnologías y dependencias, consulta la API técnica y el feed de noticias de [DayZeroHub](https://dayzerohub.site) y genera un informe HTML o Markdown. El escaneo web (`scan`) sigue funcionando igual.
+Necesitás Git y **Go 1.27.4 o posterior**, según [go.mod](go.mod). Desde Bash/Zsh:
 
 ```bash
-mateprobe audit --path /home/maxi/Escritorio/matelabs/projects/mateturnos
-mateprobe audit --path ./proyecto --format html --output ./informe.html
-mateprobe audit --path ./proyecto --format md   --output ./informe.md
-mateprobe audit --path ./proyecto --env-file ~/.config/mateprobe/.env --open
+git clone https://github.com/maxirossi/dayzerohub-cli.git
+cd dayzerohub-cli
+go build -trimpath -o ./dist/mateprobe ./cmd/mateprobe
+./dist/mateprobe --version
 ```
 
-| Opción | Descripción |
-|---|---|
-| `--path` | Directorio a analizar. **Obligatorio.** |
-| `--env-file` | Archivo de configuración. Por defecto, `.env` del directorio desde el que ejecutás. |
-| `--format` | `html` o `md`. |
-| `--output` | Ruta del informe. Si es un directorio (o termina en `/`) se usa allí el nombre por defecto. |
-| `--open` | Abre el informe con la aplicación predeterminada (`xdg-open`, `open`, `rundll32`; sin shell). |
-| `--exclude PATRÓN` | Excluye rutas (sintaxis `.gitignore`, relativas a `--path`). Repetible. |
-| `--include PATRÓN` | Re-incluye rutas excluidas o ignoradas (p. ej. `.claude/worktrees/agent-x/`). Repetible. |
-| `--no-gitignore` | No respeta los `.gitignore`. |
-| `--no-default-excludes` | No aplica las exclusiones por defecto (`.git` nunca se recorre). |
-| `--ignore-git-index` | No usa el índice de Git (ver «Descubrimiento»). |
-| `--follow-symlinks` | Sigue enlaces simbólicos solo si apuntan dentro de `--path` y sin ciclos. |
-| `--export-dir DIR` | Escribe `inventory.json`, `inventory.csv`, `findings.json` y `coverage.json` (0600) con el detalle completo. |
-| `--maven-resolve` | **Modo Maven efectivo, explícito** (ver «Maven»). |
-| `--maven-bin`, `--maven-timeout`, `--maven-profile` | Ejecutable de Maven, tiempo máximo (10 min por defecto) y perfiles `-P` (repetible). |
+En Windows, compilá con `go build -trimpath -o .\dist\mateprobe.exe ./cmd/mateprobe` y ejecutá `.\dist\mateprobe.exe --version`. Para contribuir, `make check` ejecuta las comprobaciones de formato, análisis estático y tests (requiere Make).
 
-### Descubrimiento y exclusiones
+</details>
 
-El recorrido **poda** los directorios excluidos antes de leer su contenido (no se recorren para contarlos). Se respeta `.gitignore` con la semántica de Git: archivos anidados, patrones anclados/relativos, `**`, negaciones (`!`) y la regla de que no se puede re-incluir un archivo bajo un directorio excluido. También `.git/info/exclude`. Funciona igual sin Git y cuando `--path` es un subdirectorio de un repositorio (se aplican los `.gitignore` ancestros a los descendientes, nunca a la propia raíz). Un worktree (`.git` como *archivo*) en la raíz es un proyecto válido.
+## Licencia y enlaces
 
-**Precedencia** (el último que coincide gana): exclusiones por defecto → `.gitignore` → `--exclude` → `--include`. Por defecto se excluyen (solo directorios, en cualquier nivel): `.git`, `.claude/worktrees`, `node_modules`, `target`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `vendor`, cachés (`.cache`, `__pycache__`, `.venv`, `.gradle`, …). `--include` re-incluye aunque la exclusión venga de los defectos o de `.gitignore`; un patrón sin `/` inicial obliga a leer todos los directorios excluidos (usá rutas ancladas).
+Distribuido bajo [GNU GPL v3.0](LICENSE). Atribuciones en [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-**Archivos trackeados:** Git ignora `.gitignore` para los archivos que ya están en el índice, así que mateprobe lee `.git/index` (v2–v4, sin ejecutar `git`) y no descarta un archivo trackeado por una regla de `.gitignore`. Los defectos y `--exclude` mandan sobre el índice. `--ignore-git-index` lo desactiva.
-
-Los symlinks no se siguen por defecto; con `--follow-symlinks` solo si el destino real queda dentro de `--path` y no fue visitado. El informe lista las reglas aplicadas y los directorios omitidos con su motivo.
-
-### Configuración
-
-Con `mateprobe login` no hace falta archivo de configuración. Si preferís (o necesitás) configurarlo a mano, copiá `.env.example` a `.env` y completá los valores (`.env` está en `.gitignore`):
-
-```
-api_key=REEMPLAZAR_CON_LA_CLAVE_REAL
-report_format=html
-news_api_key=OPCIONAL
-```
-
-- Los nombres van **en minúsculas**. El archivo se lee como texto: no se ejecuta ni se expande nada (`$(...)`, `$VAR` y comillas invertidas quedan literales). No se usa `source`.
-- **`api_key`** (API técnica): variable de entorno del proceso → archivo `.env` → key guardada por `mateprobe login` → pregunta por terminal (`Ingresá tu API key de DayZeroHub:`) **sin mostrar los caracteres**. Nunca se imprime y no existe un flag para pasarla por argumento. Lo normal es no configurar nada: `mateprobe login` alcanza.
-- **`news_api_key`** (opcional): clave del feed editorial (`/v1/news`), que es **otra API con otra clave**. La key de `login` solo vale para la API técnica; sin `news_api_key` el feed editorial se omite con un aviso y el informe se genera igual con los datos técnicos.
-- **Formato**: `--format` > variable de entorno `report_format` > archivo `.env` > pregunta interactiva (Enter = HTML). Un valor inválido es un error, no se ignora.
-- Sin terminal interactiva y con datos faltantes, el comando termina con un mensaje claro (no queda esperando).
-- Este `.env` es **tu configuración**; nunca se busca ni se carga el `.env` del proyecto analizado.
-
-### Qué se detecta
-
-Se leen solo manifiestos, lockfiles y metadatos; **no se ejecuta ni se instala nada** del proyecto (salvo `--maven-resolve`, explícito). Se recorren varios subproyectos (frontend, backend, servicios) con las reglas de descubrimiento de arriba.
-
-| Ecosistema | Archivos | Notas |
-|---|---|---|
-| JavaScript/TypeScript | `package.json`, `package-lock.json` (v1/v2/v3), `yarn.lock` (clásico y berry) | **Workspaces** (`workspaces` con globs y `!`): cada miembro se asocia a *su* lockfile (el raíz si lo incluye; si no, el propio; nunca el de un ancestro por cercanía). Versión **resuelta** (resolución de `node_modules` sobre el grafo del lockfile) vs. **rango declarado**; directas/transitivas con la dependencia directa de origen (`via`); ámbito **producción / desarrollo / mixta** (una versión usada también en producción nunca es «desarrollo»); varias versiones de un mismo paquete se conservan. Lockfiles de contenido idéntico se parsean una sola vez, conservando cada procedencia |
-| Java (Maven) | `pom.xml` | Ver «Maven» |
-| PHP | `composer.json`, `composer.lock` | Laravel, Symfony y otros por nombre canónico; `require`/`require-dev` |
-| Go | `go.mod`, `go.work` | Módulos, versiones **declaradas** (mínimas de MVS), `replace`. `go.sum` no se usa como lista de dependencias; el grafo resuelto no se determina sin ejecutar `go` |
-| WordPress | `wp-includes/version.php`, `wp-content/plugins/*` | Versión del core y encabezados `Plugin Name`/`Version` del PHP principal. No se ejecuta PHP ni se asume que un plugin esté activo |
-
-### Correlación con los avisos (cuatro niveles que no se mezclan)
-
-1. **Componente identificado**: el inventario produce ecosistema + nombre con evidencia (lockfile, `go.mod`, metadatos). Solo **identidades** de paquetes (`npm`, `Packagist`, `Go`) se envían a la API técnica; los runtimes (Node.js, PHP, Go) y WordPress no se consultan ahí.
-2. **Aviso asociado** (`matched`): hay avisos para esa identidad. Todavía no implica que la versión local esté afectada.
-3. **Versión dentro del rango** — la decisión es **local**: se compara la versión exacta con `ranges`/`versions` según el `version_scheme` (semver y composer/WordPress; el resto queda «No determinado»), solo si `identity.status = verified` y `range_quality = usable`. Semántica OSV: `introduced` inclusivo, `fixed` exclusivo, `last_affected` inclusivo, `limit` exclusivo; cada `introduced…fixed` es una rama independiente; sin cierre el rango es abierto. Resultados: *dentro del rango afectado* · *fuera del rango informado* · *No determinado* (restricciones como `^5.0.0`, versión desconocida, rangos `GIT` o insuficientes, esquema sin comparador, conflictos entre fuentes, `replace` de Go). Las versiones de `go.mod` son «declaradas»: se evalúan con una salvedad explícita.
-4. **Explotabilidad no determinada**: se muestra `known_exploited` / `not_listed_in_kev` / sin información; «sin información» nunca se presenta como «no explotado».
-
-`no_match`, `ecosystem_not_covered` y `error` **no** significan «seguro»: se informan como «sin datos». Los avisos retirados o rechazados no son hallazgos (se cuentan aparte).
-
-Además se consulta el **feed editorial** (`/news`) como complemento (WordPress, que el catálogo técnico no cubre, y avisos sin rangos): ahí se usan identificadores exactos, alias acotados y menciones textuales, siempre como «coincidencia de componente; versión sin verificar» o «posible coincidencia textual». Si un aviso editorial comparte CVE/GHSA con un hallazgo técnico del mismo componente, solo se muestra el técnico. Los avisos se deduplican únicamente por identificadores explícitos.
-
-### API de DayZeroHub
-
-Las claves viajan en la cabecera `X-API-Key` (nunca en la query). Las rutas `/api/v1/security/*` usan la `api_key` personal (la de `login`); `/api/v1/news` usa `news_api_key`. Las URLs son constantes en `dzh/client.go` sobre `https://dayzerohub.site`:
-
-| Método y ruta | Uso |
-|---|---|
-| `GET /api/v1/security/catalog` | Alcance (ecosistemas) y frescura del catálogo técnico |
-| `POST /api/v1/security/packages/lookup` | Avisos por identidad, en lotes de ≤100 componentes (`limit` 100 por componente, `next_cursor` por componente, reintento solo de los `error`) |
-| `GET /api/v1/security/advisories` | Catálogo técnico paginado por cursor opaco (método `Advisories`; el informe no lo necesita) |
-| `GET /api/v1/news?lang=es` | (con `news_api_key`) Feed editorial: `{items,page,page_size,max_pages}`, hasta 5 páginas de 20 |
-
-El cliente (`net/http`) usa timeout, cancela con Ctrl+C, limita el tamaño de la respuesta, reintenta 429/5xx/red con backoff exponencial y jitter (respetando `Retry-After`, hasta 30 s), **no reintenta 401** (los 401 repetidos pueden banear la IP; ante un 401 se cortan todas las consultas y se genera el informe parcial), no reenvía `X-API-Key` a otro origen en una redirección y tolera campos extra o `null` (contrato `dzh-security/1`). Si algo falla se genera igualmente un **informe parcial** con el inventario local y el estado «Consulta de vulnerabilidades no completada». **Privacidad:** a la API técnica solo viaja ecosistema + nombre del paquete; jamás versiones, rutas ni contenido de archivos (más el resumen de uso descrito en «Qué obtenés»).
-
-### Maven
-
-- **Modo estático (por defecto):** se leen los `pom.xml` (sin ejecutar nada ni usar la red): módulos del reactor, parent POM (`relativePath`, luego el repositorio local de solo lectura `~/.m2/repository`), propiedades (`${project.version}`, `${parent.version}`, propias), `dependencyManagement`, BOM importados, scopes (`test` → desarrollo) y perfiles `activeByDefault` (o los de `--maven-profile`). Se resuelven las dependencias **directas**; las **transitivas** y las versiones que dependen de parents/BOM/propiedades ausentes quedan como **pendientes**, agrupadas por causa en el informe. Leer un `pom.xml` no equivale a haber evaluado todo el backend.
-- **Modo efectivo (`--maven-resolve`, explícito):** ejecuta `mvn dependency:tree` una sola vez sobre el reactor raíz, con timeout (`--maven-timeout`) y salida acotada. **Maven puede descargar artefactos y ejecutar plugins y extensiones del proyecto auditado** (por eso es opt-in). Nunca se usa `./mvnw` ni scripts del repositorio (un ejecutable dentro del repo auditado se rechaza). Si falta Maven, hay timeout o error, se informa «Maven: modo efectivo no completado» y queda el resultado estático.
-- **Evaluación:** la API de DayZeroHub cubre Maven (identidad `grupo:artefacto`, esquema `maven`); el comparador sigue `ComparableVersion` de Maven. El catálogo Maven es pequeño: «sin avisos» no es garantía. Si el catálogo no cubriera Maven, el informe muestra «inventariado, evaluación no disponible».
-
-### Avisos únicos, ocurrencias y prioridad
-
-El informe separa **aviso** (con los alias CVE/GHSA que la fuente declara equivalentes unificados; avisos distintos no se fusionan por afectar el mismo paquete), **componente+versión**, **ocurrencia** (proyecto/servicio, ámbito, lockfile, vía) y **resultado de evaluación**. Una tarjeta por aviso único; si un aviso está confirmado en un servicio y es indeterminado en otro, ambos se muestran. Contadores separados: avisos únicos, componentes afectados y ocurrencias.
-
-Prioridad (determinista y visible en el informe): certeza de la evaluación → explotación conocida (CISA KEV) → severidad → EPSS (la API actual no lo informa: «no disponible») → uso en producción → CVSS → identificador. Los datos ausentes se muestran como «no disponible», nunca como 0 o «no». Los comandos de actualización solo se sugieren (nunca se ejecutan) cuando se conocen gestor, workspace y dependencia directa; para transitivas se orienta a actualizar el padre o revisar la resolución.
-
-### Informe
-
-- **Compacto:** resumen accionable al inicio, tarjetas por aviso con ubicaciones en secciones colapsables, problemas de cobertura agrupados por causa (contador + ejemplos) y límites en listas repetitivas. **No se incrusta el inventario**; el detalle completo va a `--export-dir` (JSON/CSV; el CSV neutraliza celdas que empiezan con `= + - @`).
-- **HTML** autocontenido: CSS embebido, sin CDN ni fuentes ni recursos remotos (con CSP restrictiva), escapado con `html/template`; solo se activan enlaces `http(s)`.
-- **Markdown** con las mismas secciones: proyecto y fecha, tecnologías, subproyectos, avisos relacionados (ID, evidencia, enlaces), versiones desconocidas, archivos no analizados, páginas/avisos consultados y limitaciones. El contenido de terceros se escapa.
-- Sin `--output` se guarda en `./reports/<proyecto>-<AAAAMMDD-HHMMSS>.<ext>` sin sobrescribir informes anteriores (permisos `0600`).
-- Si no hay coincidencias: «No se encontraron avisos relacionados dentro de los datos consultados.» El informe nunca afirma que un proyecto sea seguro.
-
-Al terminar se muestra el estado, un resumen, la ruta absoluta y un enlace **«Abrir informe»** (`file://`, con paths con espacios codificados). En terminales compatibles es un hipervínculo OSC 8 (algunas requieren Ctrl+clic; otras no admiten enlaces locales); siempre se imprime también la URL en texto plano. Con la salida redirigida no se emiten secuencias de escape. Si `--open` falla, el informe se conserva y se informa su ubicación.
-
-Códigos de salida de `audit`: `0` completo · `1` error de uso/configuración · `2` informe parcial (consulta incompleta) · `130` interrumpido con Ctrl+C.
-
-Ejemplos generados desde fixtures: [`examples/audit-informe.html`](examples/audit-informe.html) y [`examples/audit-informe.md`](examples/audit-informe.md) (`make examples`). El informe sale en el idioma activo (`--lang`).
-
-### No soportado todavía
-
-`pnpm-lock.yaml` y `pnpm-workspace.yaml` (se informa y se usan solo las restricciones de `package.json`), `npm-shrinkwrap.json`, Python, Gradle, Ruby, Rust, .NET y otros ecosistemas (se listan como no analizados), temas y `mu-plugins` de WordPress, imports del código fuente, comparación de versiones de PyPI, RubyGems y NuGet, rangos `GIT`, datos técnicos de WordPress (el catálogo no los cubre todavía), mediación/exclusiones/perfiles por `jdk`/`os`/`property` de Maven sin `--maven-resolve`, y análisis de explotabilidad.
-
-## Integración con MateAudit
-
-El núcleo es un conjunto de paquetes Go reutilizables:
-
-| Paquete | Responsabilidad |
-|---|---|
-| `targets` | parseo, límites, exclusiones y dedupe de objetivos |
-| `collect` | HTTP/TLS, redirecciones, rate limit, límites de lectura |
-| `detect` | wappalyzergo + reglas propias con evidencia |
-| `scan` | orquestación con concurrencia y cancelación |
-| `model` | resultados (contrato JSON versionado) |
-| `export` | tabla, JSON, CSV, HTML |
-| `redact` | sanitización y redacción |
-
-```go
-eng, _ := detect.New()
-list, _ := targets.Expand([]string{"ejemplo.com"}, targets.Options{})
-rep := scan.Run(ctx, scan.Config{Concurrency: 5, Collect: collect.Config{Rate: 5}}, list, eng)
-// rep es un *model.Report; export.JSON(w, rep) para serializarlo
-```
-
-Alternativa sin código: consumir `--format json` (`schema_version` permite detectar cambios incompatibles).
-
-## Limitaciones
-
-- **Solo análisis pasivo de HTML/cabeceras:** no se ejecuta JavaScript ni se descargan los assets. Tecnologías visibles solo en runtime (SPAs con detección por `window.*`) o dentro de bundles no se ven.
-- **Las firmas son una instantánea** embebida en la versión fijada de wappalyzergo (v0.3.11); no se actualizan solas. Los falsos positivos/negativos de ese catálogo se heredan.
-- **Sin evidencia ni confianza** para lo que detecta solo wappalyzergo (ver arriba). Si el motor detecta directamente algo que además marca como implicado por otra tecnología y ninguna regla propia lo confirma, se registra como `inferred` (criterio conservador).
-- Las **versiones** son las que el sitio declara o las que una firma extrae; no se verifican. Los servidores pueden ocultarlas o falsearlas.
-- La misma tecnología puede aparecer una vez por cada URL/respuesta donde se observó (p. ej. en `http://` y `https://`).
-- **HTTP/1.1** únicamente (sin HTTP/2 ni Brotli); se ignoran las variables de proxy del entorno a propósito.
-- Las exclusiones de IP se evalúan sobre IPs literales de objetivos y redirecciones; **no** sobre las IPs a las que resuelve un dominio.
-- El rate limit es global con ráfaga 1; el timeout se aplica por solicitud, incluidas las de redirección.
-- IPv6 con zona (`fe80::1%eth0`) no está soportado.
-- Los binarios de Windows y macOS se **compilan** con `make dist` pero en este desarrollo solo se **ejecutó** el de Linux x86-64.
-
-## Licencia
-
-mateprobe se distribuye bajo la **GNU General Public License v3.0** ([`LICENSE`](LICENSE)). El motor de detección embebe una base de firmas derivada de repositorios GPL-3.0, por lo que el conjunto se licencia bajo la misma licencia; el código fuente de cada versión está en este repositorio (la etiqueta `vX.Y.Z` corresponde al binario del release). Atribuciones de terceros en [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+[Portal DayZeroHub](https://dayzerohub.site/) · [Descargas](https://github.com/maxirossi/dayzerohub-cli/releases/latest) · [Reportar un problema](https://github.com/maxirossi/dayzerohub-cli/issues) · [English](README.en.md)
