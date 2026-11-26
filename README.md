@@ -1,6 +1,6 @@
 # mateprobe
 
-Detecta las tecnologías de sitios web (servidor, lenguaje, CMS, frameworks, CDN, analytics…) **desde tu máquina**, a partir de dominios, URLs, IPs, CIDR o rangos de IPs. Un único ejecutable: no requiere Go, Docker, Node ni base de datos, y no envía nada a terceros.
+Detecta las tecnologías de sitios web (servidor, lenguaje, CMS, frameworks, CDN, analytics…) **desde tu máquina**, a partir de dominios, URLs, IPs, CIDR o rangos de IPs. Un único ejecutable: no requiere Go, Docker, Node ni base de datos, y `scan` no envía nada a terceros (el subcomando `audit` solo consulta la API de DayZeroHub; ver [Auditoría de proyectos](#auditoría-de-proyectos-audit)).
 
 Cada hallazgo indica **qué evidencia lo respalda y cuánto se puede confiar en él**; no solo un nombre. Pensado como insumo para MateAudit (ver [Integración](#integración-con-mateaudit)).
 
@@ -24,6 +24,15 @@ sha256sum -c SHA256SUMS --ignore-missing # opcional: verificar integridad
 
 En macOS los binarios no están firmados: Gatekeeper puede pedir aprobación manual (`xattr -d com.apple.quarantine <archivo>`).
 
+### Iniciar sesión (`login`)
+
+```bash
+mateprobe login    # muestra un link y un código; lo aprobás en tu cuenta de DayZeroHub y la key queda guardada
+mateprobe logout   # borra la key local (revocala también en el panel: "API técnica")
+```
+
+La key personal (`dzh_…`) se guarda en el directorio de configuración del usuario con permisos 0600 y `audit` la usa si no hay `api_key` en el entorno o el `.env`. Solo vale para la API técnica; el feed editorial usa otra clave opcional (`news_api_key`).
+
 ### Compilar desde el código
 
 Requiere Go ≥ 1.27 (solo para compilar).
@@ -32,7 +41,8 @@ Requiere Go ≥ 1.27 (solo para compilar).
 make check     # gofmt + go vet + go test -race
 make build     # dist/mateprobe para tu plataforma
 make dist      # 6 binarios + SHA256SUMS en dist/
-make examples  # regenera examples/ desde servidores locales
+make examples  # regenera examples/ desde servidores locales y fixtures
+make build-linux # dist/mateprobe-<versión>-linux-amd64
 ```
 
 ## Uso
@@ -156,6 +166,125 @@ No se guardan valores de cookies (solo nombres; `Set-Cookie` aparece como `nombr
 - **html**: reporte estático, autocontenido, **sin JavaScript ni recursos externos** (con CSP restrictivo). Todo dato remoto se escapa; nunca se renderiza HTML remoto.
 
 Ejemplos generados desde fixtures locales (`make examples`): [`examples/resultado.json`](examples/resultado.json), [`examples/resultado.csv`](examples/resultado.csv), [`examples/reporte.html`](examples/reporte.html), [`examples/resultado.txt`](examples/resultado.txt).
+
+## Auditoría de proyectos (`audit`)
+
+`mateprobe audit` analiza un **proyecto local**, identifica sus tecnologías y dependencias, consulta la API técnica y el feed de noticias de [DayZeroHub](https://dayzerohub.site) y genera un informe HTML o Markdown. El escaneo web (`scan`) sigue funcionando igual.
+
+```bash
+mateprobe audit --path /home/maxi/Escritorio/matelabs/projects/mateturnos
+mateprobe audit --path ./proyecto --format html --output ./informe.html
+mateprobe audit --path ./proyecto --format md   --output ./informe.md
+mateprobe audit --path ./proyecto --env-file ~/.config/mateprobe/.env --open
+```
+
+| Opción | Descripción |
+|---|---|
+| `--path` | Directorio a analizar. **Obligatorio.** |
+| `--env-file` | Archivo de configuración. Por defecto, `.env` del directorio desde el que ejecutás. |
+| `--format` | `html` o `md`. |
+| `--output` | Ruta del informe. Si es un directorio (o termina en `/`) se usa allí el nombre por defecto. |
+| `--open` | Abre el informe con la aplicación predeterminada (`xdg-open`, `open`, `rundll32`; sin shell). |
+| `--exclude PATRÓN` | Excluye rutas (sintaxis `.gitignore`, relativas a `--path`). Repetible. |
+| `--include PATRÓN` | Re-incluye rutas excluidas o ignoradas (p. ej. `.claude/worktrees/agent-x/`). Repetible. |
+| `--no-gitignore` | No respeta los `.gitignore`. |
+| `--no-default-excludes` | No aplica las exclusiones por defecto (`.git` nunca se recorre). |
+| `--ignore-git-index` | No usa el índice de Git (ver «Descubrimiento»). |
+| `--follow-symlinks` | Sigue enlaces simbólicos solo si apuntan dentro de `--path` y sin ciclos. |
+| `--export-dir DIR` | Escribe `inventory.json`, `inventory.csv`, `findings.json` y `coverage.json` (0600) con el detalle completo. |
+| `--maven-resolve` | **Modo Maven efectivo, explícito** (ver «Maven»). |
+| `--maven-bin`, `--maven-timeout`, `--maven-profile` | Ejecutable de Maven, tiempo máximo (10 min por defecto) y perfiles `-P` (repetible). |
+
+### Descubrimiento y exclusiones
+
+El recorrido **poda** los directorios excluidos antes de leer su contenido (no se recorren para contarlos). Se respeta `.gitignore` con la semántica de Git: archivos anidados, patrones anclados/relativos, `**`, negaciones (`!`) y la regla de que no se puede re-incluir un archivo bajo un directorio excluido. También `.git/info/exclude`. Funciona igual sin Git y cuando `--path` es un subdirectorio de un repositorio (se aplican los `.gitignore` ancestros a los descendientes, nunca a la propia raíz). Un worktree (`.git` como *archivo*) en la raíz es un proyecto válido.
+
+**Precedencia** (el último que coincide gana): exclusiones por defecto → `.gitignore` → `--exclude` → `--include`. Por defecto se excluyen (solo directorios, en cualquier nivel): `.git`, `.claude/worktrees`, `node_modules`, `target`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `vendor`, cachés (`.cache`, `__pycache__`, `.venv`, `.gradle`, …). `--include` re-incluye aunque la exclusión venga de los defectos o de `.gitignore`; un patrón sin `/` inicial obliga a leer todos los directorios excluidos (usá rutas ancladas).
+
+**Archivos trackeados:** Git ignora `.gitignore` para los archivos que ya están en el índice, así que mateprobe lee `.git/index` (v2–v4, sin ejecutar `git`) y no descarta un archivo trackeado por una regla de `.gitignore`. Los defectos y `--exclude` mandan sobre el índice. `--ignore-git-index` lo desactiva.
+
+Los symlinks no se siguen por defecto; con `--follow-symlinks` solo si el destino real queda dentro de `--path` y no fue visitado. El informe lista las reglas aplicadas y los directorios omitidos con su motivo.
+
+### Configuración
+
+Copiá `.env.example` a `.env` y completá la clave real (`.env` está en `.gitignore`):
+
+```
+api_key=REEMPLAZAR_CON_LA_CLAVE_REAL
+report_format=html
+```
+
+- Los nombres van **en minúsculas**. El archivo se lee como texto: no se ejecuta ni se expande nada (`$(...)`, `$VAR` y comillas invertidas quedan literales). No se usa `source`.
+- **`api_key`**: variable de entorno del proceso → archivo `.env`. Si falta, se pide por terminal (`Ingresá tu API key de DayZeroHub:`) **sin mostrar los caracteres**. No se guarda, no se imprime y no existe un flag para pasarla por argumento.
+- **Formato**: `--format` > variable de entorno `report_format` > archivo `.env` > pregunta interactiva (Enter = HTML). Un valor inválido es un error, no se ignora.
+- Sin terminal interactiva y con datos faltantes, el comando termina con un mensaje claro (no queda esperando).
+- Este `.env` es **tu configuración**; nunca se busca ni se carga el `.env` del proyecto analizado.
+
+### Qué se detecta
+
+Se leen solo manifiestos, lockfiles y metadatos; **no se ejecuta ni se instala nada** del proyecto (salvo `--maven-resolve`, explícito). Se recorren varios subproyectos (frontend, backend, servicios) con las reglas de descubrimiento de arriba.
+
+| Ecosistema | Archivos | Notas |
+|---|---|---|
+| JavaScript/TypeScript | `package.json`, `package-lock.json` (v1/v2/v3), `yarn.lock` (clásico y berry) | **Workspaces** (`workspaces` con globs y `!`): cada miembro se asocia a *su* lockfile (el raíz si lo incluye; si no, el propio; nunca el de un ancestro por cercanía). Versión **resuelta** (resolución de `node_modules` sobre el grafo del lockfile) vs. **rango declarado**; directas/transitivas con la dependencia directa de origen (`via`); ámbito **producción / desarrollo / mixta** (una versión usada también en producción nunca es «desarrollo»); varias versiones de un mismo paquete se conservan. Lockfiles de contenido idéntico se parsean una sola vez, conservando cada procedencia |
+| Java (Maven) | `pom.xml` | Ver «Maven» |
+| PHP | `composer.json`, `composer.lock` | Laravel, Symfony y otros por nombre canónico; `require`/`require-dev` |
+| Go | `go.mod`, `go.work` | Módulos, versiones **declaradas** (mínimas de MVS), `replace`. `go.sum` no se usa como lista de dependencias; el grafo resuelto no se determina sin ejecutar `go` |
+| WordPress | `wp-includes/version.php`, `wp-content/plugins/*` | Versión del core y encabezados `Plugin Name`/`Version` del PHP principal. No se ejecuta PHP ni se asume que un plugin esté activo |
+
+### Correlación con los avisos (cuatro niveles que no se mezclan)
+
+1. **Componente identificado**: el inventario produce ecosistema + nombre con evidencia (lockfile, `go.mod`, metadatos). Solo **identidades** de paquetes (`npm`, `Packagist`, `Go`) se envían a la API técnica; los runtimes (Node.js, PHP, Go) y WordPress no se consultan ahí.
+2. **Aviso asociado** (`matched`): hay avisos para esa identidad. Todavía no implica que la versión local esté afectada.
+3. **Versión dentro del rango** — la decisión es **local**: se compara la versión exacta con `ranges`/`versions` según el `version_scheme` (semver y composer/WordPress; el resto queda «No determinado»), solo si `identity.status = verified` y `range_quality = usable`. Semántica OSV: `introduced` inclusivo, `fixed` exclusivo, `last_affected` inclusivo, `limit` exclusivo; cada `introduced…fixed` es una rama independiente; sin cierre el rango es abierto. Resultados: *dentro del rango afectado* · *fuera del rango informado* · *No determinado* (restricciones como `^5.0.0`, versión desconocida, rangos `GIT` o insuficientes, esquema sin comparador, conflictos entre fuentes, `replace` de Go). Las versiones de `go.mod` son «declaradas»: se evalúan con una salvedad explícita.
+4. **Explotabilidad no determinada**: se muestra `known_exploited` / `not_listed_in_kev` / sin información; «sin información» nunca se presenta como «no explotado».
+
+`no_match`, `ecosystem_not_covered` y `error` **no** significan «seguro»: se informan como «sin datos». Los avisos retirados o rechazados no son hallazgos (se cuentan aparte).
+
+Además se consulta el **feed editorial** (`/news`) como complemento (WordPress, que el catálogo técnico no cubre, y avisos sin rangos): ahí se usan identificadores exactos, alias acotados y menciones textuales, siempre como «coincidencia de componente; versión sin verificar» o «posible coincidencia textual». Si un aviso editorial comparte CVE/GHSA con un hallazgo técnico del mismo componente, solo se muestra el técnico. Los avisos se deduplican únicamente por identificadores explícitos.
+
+### API de DayZeroHub
+
+Una sola `api_key` (cabecera `X-API-Key`, nunca en la query) para las cuatro URLs, definidas como constantes en `dzh/client.go` sobre `https://dayzerohub.site`:
+
+| Método y ruta | Uso |
+|---|---|
+| `GET /api/v1/security/catalog` | Alcance (ecosistemas) y frescura del catálogo técnico |
+| `POST /api/v1/security/packages/lookup` | Avisos por identidad, en lotes de ≤100 componentes (`limit` 100 por componente, `next_cursor` por componente, reintento solo de los `error`) |
+| `GET /api/v1/security/advisories` | Catálogo técnico paginado por cursor opaco (método `Advisories`; el informe no lo necesita) |
+| `GET /api/v1/news?lang=es` | Feed editorial: `{items,page,page_size,max_pages}`, hasta 5 páginas de 20 |
+
+El cliente (`net/http`) usa timeout, cancela con Ctrl+C, limita el tamaño de la respuesta, reintenta 429/5xx/red con backoff exponencial y jitter (respetando `Retry-After`, hasta 30 s), **no reintenta 401** (los 401 repetidos pueden banear la IP; ante un 401 se cortan todas las consultas y se genera el informe parcial), no reenvía `X-API-Key` a otro origen en una redirección y tolera campos extra o `null` (contrato `dzh-security/1`). Si algo falla se genera igualmente un **informe parcial** con el inventario local y el estado «Consulta de vulnerabilidades no completada». **Privacidad:** a la API técnica solo viaja ecosistema + nombre del paquete; jamás versiones, rutas ni contenido de archivos.
+
+### Maven
+
+- **Modo estático (por defecto):** se leen los `pom.xml` (sin ejecutar nada ni usar la red): módulos del reactor, parent POM (`relativePath`, luego el repositorio local de solo lectura `~/.m2/repository`), propiedades (`${project.version}`, `${parent.version}`, propias), `dependencyManagement`, BOM importados, scopes (`test` → desarrollo) y perfiles `activeByDefault` (o los de `--maven-profile`). Se resuelven las dependencias **directas**; las **transitivas** y las versiones que dependen de parents/BOM/propiedades ausentes quedan como **pendientes**, agrupadas por causa en el informe. Leer un `pom.xml` no equivale a haber evaluado todo el backend.
+- **Modo efectivo (`--maven-resolve`, explícito):** ejecuta `mvn dependency:tree` una sola vez sobre el reactor raíz, con timeout (`--maven-timeout`) y salida acotada. **Maven puede descargar artefactos y ejecutar plugins y extensiones del proyecto auditado** (por eso es opt-in). Nunca se usa `./mvnw` ni scripts del repositorio (un ejecutable dentro del repo auditado se rechaza). Si falta Maven, hay timeout o error, se informa «Maven: modo efectivo no completado» y queda el resultado estático.
+- **Evaluación:** la API de DayZeroHub cubre Maven (identidad `grupo:artefacto`, esquema `maven`); el comparador sigue `ComparableVersion` de Maven. El catálogo Maven es pequeño: «sin avisos» no es garantía. Si el catálogo no cubriera Maven, el informe muestra «inventariado, evaluación no disponible».
+
+### Avisos únicos, ocurrencias y prioridad
+
+El informe separa **aviso** (con los alias CVE/GHSA que la fuente declara equivalentes unificados; avisos distintos no se fusionan por afectar el mismo paquete), **componente+versión**, **ocurrencia** (proyecto/servicio, ámbito, lockfile, vía) y **resultado de evaluación**. Una tarjeta por aviso único; si un aviso está confirmado en un servicio y es indeterminado en otro, ambos se muestran. Contadores separados: avisos únicos, componentes afectados y ocurrencias.
+
+Prioridad (determinista y visible en el informe): certeza de la evaluación → explotación conocida (CISA KEV) → severidad → EPSS (la API actual no lo informa: «no disponible») → uso en producción → CVSS → identificador. Los datos ausentes se muestran como «no disponible», nunca como 0 o «no». Los comandos de actualización solo se sugieren (nunca se ejecutan) cuando se conocen gestor, workspace y dependencia directa; para transitivas se orienta a actualizar el padre o revisar la resolución.
+
+### Informe
+
+- **Compacto:** resumen accionable al inicio, tarjetas por aviso con ubicaciones en secciones colapsables, problemas de cobertura agrupados por causa (contador + ejemplos) y límites en listas repetitivas. **No se incrusta el inventario**; el detalle completo va a `--export-dir` (JSON/CSV; el CSV neutraliza celdas que empiezan con `= + - @`).
+- **HTML** autocontenido: CSS embebido, sin CDN ni fuentes ni recursos remotos (con CSP restrictiva), escapado con `html/template`; solo se activan enlaces `http(s)`.
+- **Markdown** con las mismas secciones: proyecto y fecha, tecnologías, subproyectos, avisos relacionados (ID, evidencia, enlaces), versiones desconocidas, archivos no analizados, páginas/avisos consultados y limitaciones. El contenido de terceros se escapa.
+- Sin `--output` se guarda en `./reports/<proyecto>-<AAAAMMDD-HHMMSS>.<ext>` sin sobrescribir informes anteriores (permisos `0600`).
+- Si no hay coincidencias: «No se encontraron avisos relacionados dentro de los datos consultados.» El informe nunca afirma que un proyecto sea seguro.
+
+Al terminar se muestra el estado, un resumen, la ruta absoluta y un enlace **«Abrir informe»** (`file://`, con paths con espacios codificados). En terminales compatibles es un hipervínculo OSC 8 (algunas requieren Ctrl+clic; otras no admiten enlaces locales); siempre se imprime también la URL en texto plano. Con la salida redirigida no se emiten secuencias de escape. Si `--open` falla, el informe se conserva y se informa su ubicación.
+
+Códigos de salida de `audit`: `0` completo · `1` error de uso/configuración · `2` informe parcial (consulta incompleta) · `130` interrumpido con Ctrl+C.
+
+Ejemplos generados desde fixtures: [`examples/audit-informe.html`](examples/audit-informe.html) y [`examples/audit-informe.md`](examples/audit-informe.md) (`make examples`).
+
+### No soportado todavía
+
+`pnpm-lock.yaml` y `pnpm-workspace.yaml` (se informa y se usan solo las restricciones de `package.json`), `npm-shrinkwrap.json`, Python, Gradle, Ruby, Rust, .NET y otros ecosistemas (se listan como no analizados), temas y `mu-plugins` de WordPress, imports del código fuente, comparación de versiones de PyPI, RubyGems y NuGet, rangos `GIT`, datos técnicos de WordPress (el catálogo no los cubre todavía), mediación/exclusiones/perfiles por `jdk`/`os`/`property` de Maven sin `--maven-resolve`, y análisis de explotabilidad.
 
 ## Integración con MateAudit
 

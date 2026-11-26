@@ -1,0 +1,9 @@
+# yarn lockfile v1
+
+"@vue/shared@3.4.21":
+  version "3.4.21"
+
+vue@^3.4.0:
+  version "3.4.21"
+  dependencies:
+    "@vue/shared" "3.4.21"

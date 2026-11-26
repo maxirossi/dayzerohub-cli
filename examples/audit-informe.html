@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Informe de auditoría — proyecto-mixto</title>
+<style>
+:root{--bg:#fff;--fg:#1c2330;--muted:#5b6678;--line:#d9dee7;--card:#f5f7fa;--ok:#1a7f4b;--warn:#a15c00;--err:#b42318;--crit:#b42318;--high:#c4560b;--med:#a15c00;--low:#2f6fb3;--unk:#5b6678}
+@media (prefers-color-scheme:dark){:root{--bg:#10141b;--fg:#e6e9ef;--muted:#9aa4b5;--line:#2a3140;--card:#181e29;--ok:#4cc38a;--warn:#e5a13a;--err:#ff7b72;--crit:#ff7b72;--high:#f0883e;--med:#e5a13a;--low:#6cb0ff;--unk:#9aa4b5}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.6rem;margin:0 0 4px}h2{font-size:1.2rem;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}h3{font-size:1rem;margin:20px 0 8px}
+.meta{color:var(--muted);margin:0 0 12px}.meta b{color:var(--fg)}
+.status{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600;border:1px solid currentColor;margin-right:6px}
+.status.ok{color:var(--ok)}.status.warn{color:var(--warn)}.status.error{color:var(--err)}
+.notice{background:var(--card);border-left:4px solid var(--warn);padding:10px 14px;border-radius:4px;margin:14px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}.card b{display:block;font-size:1.15rem}.card span{color:var(--muted);font-size:.85rem}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;font-size:.85rem}th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--card)}tr:last-child td{border-bottom:0}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85em;word-break:break-all}
+.finding{border:1px solid var(--line);border-left:6px solid var(--unk);border-radius:8px;padding:12px 14px;margin:12px 0;background:var(--card)}
+.finding.critical{border-left-color:var(--crit)}.finding.high{border-left-color:var(--high)}.finding.medium,.finding.moderate{border-left-color:var(--med)}.finding.low{border-left-color:var(--low)}
+.finding h4{margin:0 0 6px;font-size:1rem}.badge{display:inline-block;font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid var(--muted);margin-right:6px}
+.badge.critical{color:var(--crit);border-color:var(--crit)}.badge.high{color:var(--high);border-color:var(--high)}.badge.medium,.badge.moderate{color:var(--med);border-color:var(--med)}.badge.low{color:var(--low);border-color:var(--low)}.badge.affected{color:var(--err);border-color:var(--err)}.badge.undetermined{color:var(--warn);border-color:var(--warn)}.badge.not_affected{color:var(--ok);border-color:var(--ok)}.badge.kev{color:var(--err);border-color:var(--err)}
+.finding dl{margin:8px 0 0;display:grid;grid-template-columns:max-content 1fr;gap:3px 12px}.finding dt{color:var(--muted)}.finding dd{margin:0}
+.unit{margin:8px 0;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:6px}.unit ul{margin:4px 0 0;padding-left:18px;color:var(--muted)}
+a{color:var(--low)}details{margin:8px 0}summary{cursor:pointer;font-weight:600}
+ul.plain{padding-left:20px}.muted{color:var(--muted)}
+@media print{body{font-size:12px}.tw{overflow:visible}}
+</style>
+</head>
+<body>
+<main>
+<h1>Informe de auditoría — proyecto-mixto</h1>
+<p class="meta"><b>Ruta:</b> <span class="mono">/ejemplo/proyecto-mixto</span><br><b>Fecha del análisis:</b> 2026-11-25 12:00:00 UTC · <b>Herramienta:</b> mateprobe ejemplo<br><b>Fuente:</b> API técnica y feed de DayZeroHub (dayzerohub.site), consultados el 2026-11-25 12:00:00 UTC; catálogo técnico generado el 2026-11-25T12:00:00Z</p>
+<p><span class="status ok">Consulta técnica completada · Consulta completada dentro de la ventana que expone el proveedor</span><span class="status warn">Cobertura parcial</span></p>
+<div class="notice">Este informe cruza el inventario local con la API técnica y el feed de noticias de DayZeroHub; no es una base completa de vulnerabilidades. «Sin avisos encontrados» solo significa que la fuente consultada no devolvió avisos para esos componentes: no es una garantía de seguridad. Una versión dentro del rango afectado no implica explotabilidad confirmada.<br><b>La ausencia de hallazgos en la parte evaluada no permite concluir que el repositorio tenga riesgo bajo: revisá los módulos sin evaluar y los casos indeterminados.</b></div>
+
+<h2>Resumen</h2>
+<div class="cards"><div class="card"><b>6</b><span>Proyectos o servicios detectados</span></div><div class="card"><b>composer, go, npm, wordpress</b><span>Ecosistemas detectados</span></div><div class="card"><b>17 de 24</b><span>Componentes con versión resuelta (únicos)</span></div><div class="card"><b>24 (17 directas, 7 transitivas)</b><span>Ocurrencias de componentes</span></div><div class="card"><b>9 (5 con versión afectada, 3 indeterminados, 1 fuera de rango)</b><span>Avisos únicos</span></div><div class="card"><b>6</b><span>Componentes afectados (únicos)</span></div><div class="card"><b>6</b><span>Ocurrencias afectadas</span></div><div class="card"><b>1</b><span>Ocurrencias indeterminadas</span></div><div class="card"><b>8 en 3 causas</b><span>Problemas de cobertura</span></div></div>
+<h3>Componentes únicos según el resultado de la evaluación</h3>
+<div class="tw"><table><tbody><tr><th>Versión afectada según la fuente</th><td>6</td></tr><tr><th>Evaluación indeterminada (hay avisos, no se pudo decidir)</th><td>1</td></tr><tr><th>Versión fuera del rango afectado</th><td>0</td></tr><tr><th>Sin avisos encontrados en la fuente consultada (no equivale a seguro)</th><td>14</td></tr><tr><th>Módulo o ecosistema sin evaluar / evaluación no disponible</th><td>0</td></tr></tbody></table></div>
+
+<h2>Qué hacer primero</h2>
+<div class="tw"><table><thead><tr><th>#</th><th>Aviso</th><th>Severidad</th><th>Componente</th><th>Corregida en</th><th>Acción sugerida (no se ejecuta)</th></tr></thead><tbody>
+<tr><td>1</td><td class="mono">CVE-2026-133185</td><td><span class="badge critical">Crítica</span></td><td>github.com/elazarl/goproxy (declarada: v1.7.0)</td><td>1.9.4</td><td>en <code>api-go</code>: <code>go get github.com/elazarl/goproxy@v1.9.4</code></td></tr><tr><td>2</td><td class="mono">CVE-2026-133212</td><td><span class="badge critical">Crítica</span></td><td>@fastify/reply-from@9.8.0</td><td>9.9.0</td><td>en <code>frontend</code>: <code>npm install @fastify/reply-from@9.9.0</code></td></tr><tr><td>3</td><td class="mono">MAL-FIXTURE-0002</td><td><span class="badge critical">Crítica</span></td><td>left-pad@1.3.0</td><td>no informada</td><td>La fuente no informa una versión corregida: revisá el aviso.</td></tr><tr><td>4</td><td class="mono">CVE-0000-0007</td><td><span class="badge high">Alta</span></td><td>laravel/framework@v11.9.2</td><td>11.31.0</td><td>Actualizá laravel/framework a 11.31.0 o superior con el gestor del proyecto (comando no generado: gestor o workspace no determinados).</td></tr><tr><td>5</td><td class="mono">CVE-0000-0006</td><td><span class="badge low">Baja</span></td><td>postcss@8.4.31</td><td>8.4.40</td><td>Dependencia transitiva: actualizá la dependencia directa que la incluye o revisá la resolución (por ejemplo con `npm ls postcss`); no la agregues como dependencia directa.</td></tr></tbody></table></div>
+
+<details><summary>Criterios de prioridad</summary><ul class="plain"><li>1. Certeza de la evaluación: versión dentro del rango afectado, luego indeterminada, luego fuera de rango.</li><li>2. Explotación conocida (CISA KEV), cuando la fuente informa ese dato.</li><li>3. Severidad informada por la fuente (crítica, alta, media, baja; ausente al final).</li><li>4. EPSS, cuando esté disponible (la API actual no lo informa: se muestra «no disponible»).</li><li>5. Uso en producción (producción o mixta antes que solo desarrollo).</li><li>6. Puntaje CVSS (mayor primero; ausente al final) y, por último, el identificador.</li></ul></details>
+
+<h2>Avisos técnicos (API de seguridad de DayZeroHub)</h2>
+
+<p class="muted">La versión local se compara con los rangos del catálogo solo si la identidad está verificada, el rango es utilizable y la versión resuelta es exacta; ante cualquier duda el resultado es «No determinado». Una tarjeta por aviso único; los alias CVE/GHSA declarados por la fuente se unifican.</p>
+
+<article class="finding critical">
+<h4><span class="badge critical">#1 · Crítica · CVSS 9.1</span><span class="badge affected">Versión local dentro del rango afectado</span>FIXTURE goproxy</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>CVE-2026-133185</code>, <code>GHSA-fixt-0009-bbbb</code>, <code>vul_fixture0009</code></dd>
+<dt>Alcance</dt><dd>1 componentes · 1 ocurrencias</dd>
+<dt>Corregida en</dt><dd>1.9.4</dd>
+<dt>Explotación</dt><dd>Explotación conocida (CISA KEV)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>desconocido</dd>
+<dt>Fuentes</dt><dd>ghsa</dd>
+
+</dl>
+<div class="unit"><b>github.com/elazarl/goproxy (declarada: v1.7.0)</b> <span class="badge affected">Versión local dentro del rango afectado</span> · corregida en 1.9.4 · 1 ocurrencia(s)
+<ul><li>versión declarada en go.mod, no resuelta con herramientas de Go (suele ser la seleccionada si el go.mod está ordenado con `go mod tidy`)</li><li>[ghsa] la versión v1.7.0 está en la rama introduced 0 → fixed 1.9.4</li></ul>
+<p><b>Acciones sugeridas</b> (no se ejecutan):</p><ul><li>en <code>api-go</code>: <code>go get github.com/elazarl/goproxy@v1.9.4</code></li></ul>
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">api-go</td><td>directa</td><td>desconocido</td><td></td><td class="mono">api-go/go.mod</td><td class="mono"></td><td>declarada</td></tr></tbody></table></div></details></div>
+
+
+</article><article class="finding critical">
+<h4><span class="badge critical">#2 · Crítica · CVSS 9.0</span><span class="badge affected">Versión local dentro del rango afectado</span>FIXTURE request smuggling en reply-from</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>CVE-2026-133212</code>, <code>GHSA-fixt-0001-aaaa</code>, <code>vul_fixture0001</code></dd>
+<dt>Alcance</dt><dd>1 componentes · 1 ocurrencias</dd>
+<dt>Corregida en</dt><dd>9.9.0</dd>
+<dt>Explotación</dt><dd>No figura en CISA KEV (no descarta explotación no catalogada)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>producción</dd>
+<dt>Fuentes</dt><dd>ghsa</dd>
+
+</dl>
+<div class="unit"><b>@fastify/reply-from@9.8.0</b> <span class="badge affected">Versión local dentro del rango afectado</span> · corregida en 9.9.0 · 1 ocurrencia(s)
+<ul><li>[ghsa] la versión 9.8.0 está en la rama introduced 9.0.0 → fixed 9.9.0</li></ul>
+<p><b>Acciones sugeridas</b> (no se ejecutan):</p><ul><li>en <code>frontend</code>: <code>npm install @fastify/reply-from@9.9.0</code></li></ul>
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">frontend</td><td>directa</td><td>producción</td><td></td><td class="mono">frontend/package.json</td><td class="mono">frontend/package-lock.json</td><td>lockfile</td></tr></tbody></table></div></details></div>
+
+<p><b>Aviso editorial:</b> <a href="https://dayzerohub.site/es/advisories/cve-2026-133212-fastify-reply-from" rel="noopener noreferrer nofollow">CVE-2026-133212: @fastify/reply-from</a> </p>
+</article><article class="finding critical">
+<h4><span class="badge critical">#3 · Crítica</span><span class="badge affected">Versión local dentro del rango afectado</span>FIXTURE paquete malicioso</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>MAL-FIXTURE-0002</code>, <code>vul_fixture0002</code></dd>
+<dt>Alcance</dt><dd>1 componentes · 1 ocurrencias</dd>
+<dt>Corregida en</dt><dd>no informada por la fuente</dd>
+<dt>Explotación</dt><dd>sin información (no equivale a «no explotado»)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>producción</dd>
+<dt>Fuentes</dt><dd>osv</dd>
+
+</dl>
+<div class="unit"><b>left-pad@1.3.0</b> <span class="badge affected">Versión local dentro del rango afectado</span> · corregida en no informada · 1 ocurrencia(s)
+<ul><li>[osv] la versión 1.3.0 figura en la lista explícita de versiones afectadas</li></ul>
+<p><b>Acciones sugeridas</b> (no se ejecutan):</p><ul><li><code>frontend</code>: La fuente no informa una versión corregida: revisá el aviso.</li></ul>
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">frontend</td><td>directa</td><td>producción</td><td></td><td class="mono">frontend/package.json</td><td class="mono">frontend/package-lock.json</td><td>lockfile</td></tr></tbody></table></div></details></div>
+
+
+</article><article class="finding high">
+<h4><span class="badge high">#4 · Alta · CVSS 8.1</span><span class="badge affected">Versión local dentro del rango afectado</span>FIXTURE laravel rama</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>CVE-0000-0007</code>, <code>vul_fixture0007</code></dd>
+<dt>Alcance</dt><dd>1 componentes · 1 ocurrencias</dd>
+<dt>Corregida en</dt><dd>11.31.0</dd>
+<dt>Explotación</dt><dd>No figura en CISA KEV (no descarta explotación no catalogada)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>producción</dd>
+<dt>Fuentes</dt><dd>ghsa</dd>
+
+</dl>
+<div class="unit"><b>laravel/framework@v11.9.2</b> <span class="badge affected">Versión local dentro del rango afectado</span> · corregida en 11.31.0 · 1 ocurrencia(s)
+<ul><li>[ghsa] la versión v11.9.2 está en la rama introduced 11.0.0 → fixed 11.31.0</li></ul>
+<p><b>Acciones sugeridas</b> (no se ejecutan):</p><ul><li><code>backend</code>: Actualizá laravel/framework a 11.31.0 o superior con el gestor del proyecto (comando no generado: gestor o workspace no determinados).</li></ul>
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">backend</td><td>directa</td><td>producción</td><td></td><td class="mono"></td><td class="mono">backend/composer.lock</td><td>lockfile</td></tr></tbody></table></div></details></div>
+
+
+</article><article class="finding low">
+<h4><span class="badge low">#5 · Baja · CVSS 3.1</span><span class="badge affected">Versión local dentro del rango afectado</span>FIXTURE segunda página del componente</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>CVE-0000-0006</code>, <code>vul_fixture0006</code></dd>
+<dt>Alcance</dt><dd>2 componentes · 2 ocurrencias</dd>
+<dt>Corregida en</dt><dd>8.4.40</dd>
+<dt>Explotación</dt><dd>No figura en CISA KEV (no descarta explotación no catalogada)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>producción</dd>
+<dt>Fuentes</dt><dd>ghsa</dd>
+
+</dl>
+<div class="unit"><b>postcss@8.4.31</b> <span class="badge affected">Versión local dentro del rango afectado</span> · corregida en 8.4.40 · 1 ocurrencia(s)
+<ul><li>[ghsa] la versión 8.4.31 está en la rama introduced 8.4.0 → fixed 8.4.40</li></ul>
+<p><b>Acciones sugeridas</b> (no se ejecutan):</p><ul><li><code>frontend</code>: Dependencia transitiva: actualizá la dependencia directa que la incluye o revisá la resolución (por ejemplo con `npm ls postcss`); no la agregues como dependencia directa.</li></ul>
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">frontend</td><td>transitiva</td><td>producción</td><td></td><td class="mono">frontend/package.json</td><td class="mono">frontend/package-lock.json</td><td>lockfile</td></tr></tbody></table></div></details></div><div class="unit"><b>postcss@8.4.38</b> <span class="badge affected">Versión local dentro del rango afectado</span> · corregida en 8.4.40 · 1 ocurrencia(s)
+<ul><li>[ghsa] la versión 8.4.38 está en la rama introduced 8.4.0 → fixed 8.4.40</li></ul>
+<p><b>Acciones sugeridas</b> (no se ejecutan):</p><ul><li><code>frontend</code>: Dependencia transitiva: actualizá la dependencia directa que la incluye o revisá la resolución (por ejemplo con `npm ls postcss`); no la agregues como dependencia directa.</li></ul>
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">frontend</td><td>transitiva</td><td>desarrollo</td><td></td><td class="mono">frontend/package.json</td><td class="mono">frontend/package-lock.json</td><td>lockfile</td></tr></tbody></table></div></details></div>
+
+
+</article><article class="finding high">
+<h4><span class="badge high">#6 · Alta · CVSS 7.5</span><span class="badge undetermined">No determinado</span>FIXTURE rango GIT</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>CVE-0000-0004</code>, <code>vul_fixture0004</code></dd>
+<dt>Alcance</dt><dd>1 componentes · 1 ocurrencias</dd>
+<dt>Corregida en</dt><dd>no informada por la fuente</dd>
+<dt>Explotación</dt><dd>No figura en CISA KEV (no descarta explotación no catalogada)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>producción</dd>
+<dt>Fuentes</dt><dd>ghsa</dd>
+
+</dl>
+<div class="unit"><b>next@14.2.3</b> <span class="badge undetermined">No determinado</span> · 1 ocurrencia(s)
+<ul><li>[ghsa] rango de tipo GIT: no se compara sin commits del repositorio</li></ul>
+
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">frontend</td><td>directa</td><td>producción</td><td></td><td class="mono">frontend/package.json</td><td class="mono">frontend/package-lock.json</td><td>lockfile</td></tr></tbody></table></div></details></div>
+
+
+</article><article class="finding medium">
+<h4><span class="badge medium">#7 · Media · CVSS 5.3</span><span class="badge undetermined">No determinado</span>FIXTURE conflicto entre fuentes</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>CVE-0000-0005</code>, <code>vul_fixture0005</code></dd>
+<dt>Alcance</dt><dd>2 componentes · 2 ocurrencias</dd>
+<dt>Corregida en</dt><dd>no informada por la fuente</dd>
+<dt>Explotación</dt><dd>No figura en CISA KEV (no descarta explotación no catalogada)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>producción</dd>
+<dt>Fuentes</dt><dd>ghsa, osv</dd>
+<dt>Conflictos</dt><dd>1 conflicto(s) entre fuentes (resultado más conservador)</dd>
+</dl>
+<div class="unit"><b>postcss@8.4.31</b> <span class="badge undetermined">No determinado</span> · 1 ocurrencia(s)
+<ul><li>[ghsa] la versión 8.4.31 queda fuera de todas las ramas informadas</li><li>[osv] la versión 8.4.31 queda fuera de todas las ramas informadas</li><li>las fuentes discrepan (quality.conflicts): no se elige una en silencio</li></ul>
+
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">frontend</td><td>transitiva</td><td>producción</td><td></td><td class="mono">frontend/package.json</td><td class="mono">frontend/package-lock.json</td><td>lockfile</td></tr></tbody></table></div></details></div><div class="unit"><b>postcss@8.4.38</b> <span class="badge undetermined">No determinado</span> · 1 ocurrencia(s)
+<ul><li>[ghsa] la versión 8.4.38 queda fuera de todas las ramas informadas</li><li>[osv] la versión 8.4.38 queda fuera de todas las ramas informadas</li><li>las fuentes discrepan (quality.conflicts): no se elige una en silencio</li></ul>
+
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">frontend</td><td>transitiva</td><td>desarrollo</td><td></td><td class="mono">frontend/package.json</td><td class="mono">frontend/package-lock.json</td><td>lockfile</td></tr></tbody></table></div></details></div>
+
+
+</article><article class="finding medium">
+<h4><span class="badge medium">#8 · Media · CVSS 5.0</span><span class="badge undetermined">No determinado</span>FIXTURE laravel rango insuficiente</h4>
+<dl>
+<dt>Identificadores</dt><dd><code>CVE-0000-0008</code>, <code>vul_fixture0008</code></dd>
+<dt>Alcance</dt><dd>1 componentes · 1 ocurrencias</dd>
+<dt>Corregida en</dt><dd>no informada por la fuente</dd>
+<dt>Explotación</dt><dd>No figura en CISA KEV (no descarta explotación no catalogada)</dd>
+<dt>EPSS</dt><dd>no disponible</dd>
+<dt>Uso</dt><dd>producción</dd>
+<dt>Fuentes</dt><dd>ghsa</dd>
+
+</dl>
+<div class="unit"><b>laravel/framework@v11.9.2</b> <span class="badge undetermined">No determinado</span> · 1 ocurrencia(s)
+<ul><li>[ghsa] sin rangos ni versiones; límite inferior exclusivo no representable; restricción original: «&gt; 11.0, &lt; 11.5»</li></ul>
+
+<details><summary>Ubicaciones (1)</summary><div class="tw"><table><thead><tr><th>Proyecto</th><th>Relación</th><th>Ámbito</th><th>Vía</th><th>Manifest</th><th>Lockfile</th><th>Resolución</th></tr></thead><tbody>
+<tr><td class="mono">backend</td><td>directa</td><td>producción</td><td></td><td class="mono"></td><td class="mono">backend/composer.lock</td><td>lockfile</td></tr></tbody></table></div></details></div>
+
+
+</article>
+<h3>Avisos asociados con versión fuera del rango informado (1)</h3>
+<details><summary>Mostrar</summary><div class="tw"><table><thead><tr><th>Aviso</th><th>Resumen</th><th>Componentes</th></tr></thead><tbody>
+<tr><td class="mono">CVE-0000-0010, vul_fixture0010</td><td>FIXTURE goproxy otra rama</td><td>github.com/elazarl/goproxy (declarada: v1.7.0)</td></tr></tbody></table></div></details>
+
+
+
+<h2>Cobertura: qué quedó sin evaluar</h2>
+<details><summary>Componentes con versión no resuelta (rango declarado o desconocida) — 6</summary>
+<p class="muted">Un rango no es la versión instalada: los avisos asociados quedan «No determinado».</p>
+<ul class="plain"><li class="mono">api-go — github.com/gin-gonic/gin (declarada: v1.9.1)</li><li class="mono">api-go — github.com/elazarl/goproxy (declarada: v1.7.0)</li><li class="mono">api-go — github.com/fork/errors (declarada: v0.9.2)</li><li class="mono">api-go — github.com/pkg/errors (declarada: v0.9.1)</li><li class="mono">api-go — golang.org/x/text (declarada: v0.14.0)</li></ul><p class="muted">… y 1 más (ver coverage.json con --export-dir).</p></details><details><summary>Formato de lockfile no soportado — 1</summary>
+<p class="muted">Solo se usaron las restricciones del manifest; no hay versiones resueltas para evaluar rangos.</p>
+<ul class="plain"><li class="mono">legacy/pnpm-lock.yaml — pnpm-lock.yaml no está soportado todavía; no se analizaron las versiones resueltas (solo las restricciones de package.json)</li></ul></details><details><summary>Ecosistemas sin soporte (no analizados) — 1</summary>
+<p class="muted">El archivo se detectó pero su ecosistema aún no se analiza: sus dependencias no fueron evaluadas.</p>
+<ul class="plain"><li class="mono">legacy/requirements.txt — ecosistema no soportado todavía: Python (pip)</li></ul></details>
+
+
+<h2>Ecosistemas y proyectos</h2>
+<div class="tw"><table><thead><tr><th>Ecosistema</th><th>Proyectos</th><th>Inventario</th><th>Evaluación de avisos</th></tr></thead><tbody>
+<tr><td>composer</td><td>1</td><td>soportado</td><td>cubierto por la fuente</td></tr><tr><td>go</td><td>1</td><td>soportado</td><td>cubierto por la fuente</td></tr><tr><td>npm</td><td>3</td><td>soportado</td><td>cubierto por la fuente</td></tr><tr><td>wordpress</td><td>1</td><td>soportado</td><td>sin cobertura técnica (solo feed editorial)</td></tr><tr><td>Python (pip)</td><td>—</td><td>no soportado</td><td>módulo sin evaluar</td></tr></tbody></table></div>
+<details><summary>Proyectos o servicios detectados (6)</summary>
+<div class="tw"><table><thead><tr><th>Ruta</th><th>Nombre</th><th>Ecosistemas</th><th>Lockfile</th><th>Workspace</th></tr></thead><tbody>
+<tr><td class="mono">api-go</td><td>github.com/acme/api</td><td>go</td><td class="mono"></td><td class="mono"></td></tr><tr><td class="mono">backend</td><td>acme/backend</td><td>composer</td><td class="mono"></td><td class="mono"></td></tr><tr><td class="mono">frontend</td><td>mi-frontend</td><td>npm</td><td class="mono">frontend/package-lock.json</td><td class="mono"></td></tr><tr><td class="mono">legacy</td><td>legacy</td><td>npm</td><td class="mono"></td><td class="mono"></td></tr><tr><td class="mono">site</td><td>WordPress</td><td>wordpress</td><td class="mono"></td><td class="mono"></td></tr><tr><td class="mono">yarnapp</td><td>yarnapp</td><td>npm</td><td class="mono">yarnapp/yarn.lock</td><td class="mono"></td></tr></tbody></table></div></details>
+<details><summary>Tecnologías detectadas (13)</summary>
+<div class="tw"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Versiones</th><th>Proyectos</th></tr></thead><tbody>
+<tr><td>WordPress</td><td>CMS</td><td>6.5.3</td><td>1</td></tr><tr><td>express</td><td>framework</td><td>declarada: ^4.19.0</td><td>1</td></tr><tr><td>github.com/gin-gonic/gin</td><td>framework</td><td>declarada: v1.9.1</td><td>1</td></tr><tr><td>laravel/framework</td><td>framework</td><td>v11.9.2</td><td>1</td></tr><tr><td>next</td><td>framework</td><td>14.2.3</td><td>1</td></tr><tr><td>react</td><td>framework</td><td>18.2.0</td><td>1</td></tr><tr><td>vue</td><td>framework</td><td>3.4.21</td><td>1</td></tr><tr><td>Go</td><td>lenguaje</td><td>declarada: 1.22</td><td>1</td></tr><tr><td>Node.js</td><td>lenguaje</td><td>declarada: &gt;=20, desconocida</td><td>3</td></tr><tr><td>PHP</td><td>lenguaje</td><td>declarada: ^8.2</td><td>1</td></tr><tr><td>TypeScript</td><td>lenguaje</td><td>desconocida</td><td>1</td></tr><tr><td>Plugin Sin Version</td><td>plugin</td><td>desconocida</td><td>1</td></tr><tr><td>WP Rocket</td><td>plugin</td><td>3.15.4</td><td>1</td></tr></tbody></table></div></details>
+
+<h2>Exclusiones aplicadas</h2>
+<ul class="plain"><li>por defecto (directorios): .git, node_modules, target, dist, build, .next, .nuxt, .output, vendor, .hg, .svn, __pycache__, .cache, .venv, venv, coverage, .turbo, .idea, .vscode, .gradle, .terraform, bower_components, .parcel-cache, .svelte-kit, .claude/worktrees</li><li>índice de Git: 0 archivos tracked nunca se ignoran por .gitignore (--ignore-git-index lo desactiva)</li><li>.gitignore: (ancestro) .gitignore (5 reglas)</li><li>symlinks: no se siguen</li></ul>
+<details><summary>Directorios omitidos sin recorrer (1)</summary>
+<div class="tw"><table><thead><tr><th>Ruta</th><th>Motivo</th></tr></thead><tbody>
+<tr><td class="mono">frontend/node_modules</td><td>regla por defecto: node_modules</td></tr></tbody></table></div></details>
+
+<h2>Avisos editoriales relacionados (feed de noticias)</h2>
+
+<h3>Coincidencias de componente; afectación por versión sin verificar (3)</h3>
+<article class="finding critical">
+<h4><span class="badge critical">Crítica · CVSS 9.8</span><a href="https://dayzerohub.site/es/advisories/cve-2026-125812-wp-rocket" rel="noopener noreferrer nofollow">CVE-2026-125812: WordPress WP Rocket plugin &lt; 3.24.2 - Remote Code Execution (RCE) vulnerability</a></h4>
+<p>vulnerabilidad crítica (CVSS 9.8) en WP Media WP Rocket.</p>
+<dl>
+<dt>Clasificación</dt><dd>Coincidencia de componente; afectación por versión sin verificar</dd>
+<dt>Identificadores</dt><dd><code>CVE: CVE-2026-125812</code></dd>
+<dt>Publicado</dt><dd>2026-11-25T13:06:51&#43;00:00</dd>
+<dt>Aviso</dt><dd><a href="https://dayzerohub.site/es/advisories/cve-2026-125812-wp-rocket" rel="noopener noreferrer nofollow">https://dayzerohub.site/es/advisories/cve-2026-125812-wp-rocket</a></dd>
+</dl>
+<div class="unit"><b>Componente local:</b> WP Rocket (plugin, wordpress) — versión 3.15.4<br>Subproyecto <code>site</code> · evidencia <code>site/wp-content/plugins/wp-rocket/wp-rocket.php</code><br>Campos del aviso: product · regla: nombre o slug del plugin coinciden con el producto
+<ul><li>la versión local no se comparó con las versiones afectadas: el feed no incluye rangos estructurados</li><li>el texto del aviso menciona «&lt; 3.24.2»; no se interpretó como rango afectado</li><li>el plugin está presente en disco; no se verificó que esté activo</li></ul></div>
+
+</article><article class="finding high">
+<h4><span class="badge high">Alta · CVSS 8.2</span><a href="https://dayzerohub.site/es/advisories/cve-2026-000006-next" rel="noopener noreferrer nofollow">CVE-2026-000006: Next.js middleware bypass</a></h4>
+<p>Next.js permite evadir middleware.</p>
+<dl>
+<dt>Clasificación</dt><dd>Coincidencia de componente; afectación por versión sin verificar</dd>
+<dt>Identificadores</dt><dd><code>CVE: CVE-2026-000006</code></dd>
+<dt>Publicado</dt><dd>2026-11-20T11:00:00&#43;00:00</dd>
+<dt>Aviso</dt><dd><a href="https://dayzerohub.site/es/advisories/cve-2026-000006-next" rel="noopener noreferrer nofollow">https://dayzerohub.site/es/advisories/cve-2026-000006-next</a></dd>
+</dl>
+<div class="unit"><b>Componente local:</b> next (framework, npm) — versión 14.2.3<br>Subproyecto <code>frontend</code> · evidencia <code>frontend/package-lock.json</code><br>Campos del aviso: product, technology · regla: alias explícito
+<ul><li>la versión local no se comparó con las versiones afectadas: el feed no incluye rangos estructurados</li></ul></div>
+
+</article><article class="finding high">
+<h4><span class="badge high">Alta · CVSS 7.5</span><a href="https://dayzerohub.site/es/advisories/cve-2026-000004-laravel" rel="noopener noreferrer nofollow">CVE-2026-000004: Laravel Framework before 11.31.0 allows something</a></h4>
+<p>Aviso sobre Laravel.</p>
+<dl>
+<dt>Clasificación</dt><dd>Coincidencia de componente; afectación por versión sin verificar</dd>
+<dt>Identificadores</dt><dd><code>CVE: CVE-2026-000004</code></dd>
+<dt>Publicado</dt><dd>2026-11-22T11:00:00&#43;00:00</dd>
+<dt>Aviso</dt><dd><a href="https://dayzerohub.site/es/advisories/cve-2026-000004-laravel" rel="noopener noreferrer nofollow">https://dayzerohub.site/es/advisories/cve-2026-000004-laravel</a></dd>
+</dl>
+<div class="unit"><b>Componente local:</b> laravel/framework (framework, composer) — versión v11.9.2<br>Subproyecto <code>backend</code> · evidencia <code>backend/composer.lock</code><br>Campos del aviso: product, technology · regla: alias explícito
+<ul><li>la versión local no se comparó con las versiones afectadas: el feed no incluye rangos estructurados</li><li>el texto del aviso menciona «before 11.31.0»; no se interpretó como rango afectado</li></ul></div>
+
+</article>
+
+
+<h2>Consulta a DayZeroHub</h2>
+<div class="tw"><table><tbody><tr><th>Catálogo técnico — generado</th><td>2026-11-25T12:00:00Z</td></tr><tr><th>Catálogo técnico — última actualización</th><td>2026-11-25T11:50:00Z</td></tr><tr><th>Catálogo técnico — ecosistemas cubiertos</th><td>Go (10 avisos), Packagist (10 avisos), npm (10 avisos)</td></tr><tr><th>Catálogo técnico — fuentes con problemas</th><td>osv: error</td></tr><tr><th>Consulta técnica — identidades consultadas (una vez por ecosistema y nombre)</th><td>20</td></tr><tr><th>Consulta técnica — con avisos asociados</th><td>7</td></tr><tr><th>Consulta técnica — sin avisos en el catálogo (no equivale a seguro)</th><td>13</td></tr><tr><th>Consulta técnica — ecosistema sin cobertura</th><td>0</td></tr><tr><th>Consulta técnica — ambiguas/inválidas/con error</th><td>0</td></tr><tr><th>Consulta técnica — avisos retirados o rechazados (ignorados)</th><td>1</td></tr><tr><th>Consulta técnica — ocurrencias sin consulta técnica (runtimes, WordPress, etc.)</th><td>9</td></tr><tr><th>Consulta técnica — pedidos HTTP / reintentos</th><td>3 / 0</td></tr><tr><th>Feed editorial — estado</th><td>completa</td></tr><tr><th>Feed editorial — páginas consultadas</th><td>2 de 2 permitidas</td></tr><tr><th>Feed editorial — avisos consultados</th><td>10</td></tr><tr><th>Reintentos del feed</th><td>0</td></tr><tr><th>Cobertura limitada por el proveedor</th><td>sí (el feed expone una ventana acotada de avisos recientes)</td></tr><tr><th>Lockfiles — parseados / reutilizados por contenido idéntico</th><td>2 / 0</td></tr></tbody></table></div>
+
+<h2>Errores y limitaciones</h2>
+<ul class="plain"><li>el proveedor expone como máximo 2 páginas de 20 avisos; los avisos más antiguos no están disponibles en esta consulta</li><li>Go: go.sum no se usa como lista de dependencias y el grafo resuelto no puede determinarse sin ejecutar herramientas de Go</li><li>A la API técnica solo se envían identidades de paquetes (ecosistema y nombre): nunca versiones, rutas ni contenido de archivos.</li><li>Los imports del código fuente no se analizaron; el inventario proviene solo de manifiestos, lockfiles y metadatos.</li><li>No se ejecutó ningún comando del proyecto ni se instalaron dependencias (salvo que se haya pedido --maven-resolve).</li></ul>
+<p class="muted">Para obtener el inventario completo y todas las ocurrencias usá --export-dir DIRECTORIO (inventory.json, inventory.csv, findings.json, coverage.json).</p>
+</main>
+</body>
+</html>

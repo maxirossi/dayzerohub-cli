@@ -6,7 +6,7 @@ LDFLAGS := -s -w -X main.version=$(VERSION)
 DIST    := dist
 PLATFORMS := linux/amd64 linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64
 
-.PHONY: all check fmt vet test build dist examples clean
+.PHONY: all check fmt vet test build build-linux dist examples clean
 
 all: check build
 
@@ -25,6 +25,11 @@ build:
 	@mkdir -p $(DIST)
 	CGO_ENABLED=0 go build -trimpath -ldflags '$(LDFLAGS)' -o $(DIST)/mateprobe ./cmd/mateprobe
 
+# Solo Linux amd64: dist/mateprobe-<versión>-linux-amd64
+build-linux:
+	@mkdir -p $(DIST)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags '$(LDFLAGS)' -o $(DIST)/mateprobe-$(VERSION)-linux-amd64 ./cmd/mateprobe
+
 # Binarios para todas las plataformas + SHA256SUMS.
 dist: clean
 	@mkdir -p $(DIST)
@@ -40,6 +45,7 @@ dist: clean
 # Regenera examples/ desde servidores locales (127.0.0.1:18081-18089).
 examples:
 	go run ./tools/genexamples examples
+	go run ./tools/genauditexamples examples
 
 # Borra solo los artefactos generados (archivos, no directorios).
 clean:

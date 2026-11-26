@@ -1,3 +1,7 @@
 /dist/
 *.test
 *.out
+
+# Configuración local con la clave real de DayZeroHub (no commitear)
+.env
+/reports/

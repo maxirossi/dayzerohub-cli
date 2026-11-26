@@ -1,0 +1,801 @@
+{
+ "catalog": {
+  "schema": "dzh-security/1",
+  "generated_at": "2026-11-25T12:00:00Z",
+  "last_technical_update": "2026-11-25T11:50:00Z",
+  "coverage": {
+   "ecosystems": [
+    {
+     "ecosystem": "Go",
+     "advisories": 10,
+     "components": 5,
+     "standard": true
+    },
+    {
+     "ecosystem": "Packagist",
+     "advisories": 10,
+     "components": 5,
+     "standard": true
+    },
+    {
+     "ecosystem": "npm",
+     "advisories": 10,
+     "components": 5,
+     "standard": true
+    }
+   ],
+   "sources": [
+    {
+     "source": "ghsa",
+     "last_success_at": "2026-11-25T11:49:00Z",
+     "status": "ok"
+    },
+    {
+     "source": "osv",
+     "last_success_at": null,
+     "status": "error"
+    }
+   ]
+  },
+  "notes": [
+   "FIXTURE: datos inventados para pruebas"
+  ]
+ },
+ "entries": [
+  {
+   "ecosystem": "npm",
+   "name": "@fastify/reply-from",
+   "advisories": [
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0001",
+     "aliases": [
+      {
+       "scheme": "GHSA",
+       "id": "GHSA-fixt-0001-aaaa"
+      },
+      {
+       "scheme": "CVE",
+       "id": "CVE-2026-133212"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE request smuggling en reply-from",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "critical",
+      "cvss": {
+       "score": 9.0,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "npm",
+       "ecosystem_standard": true,
+       "name": "@fastify/reply-from",
+       "name_original": "@fastify/reply-from",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "9.0.0"
+          },
+          {
+           "fixed": "9.9.0"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": ">= 9.0.0, < 9.9.0",
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": [
+      {
+       "lang": "es",
+       "slug": "cve-2026-133212-fastify-reply-from",
+       "title": "CVE-2026-133212: @fastify/reply-from",
+       "url": "https://dayzerohub.site/es/advisories/cve-2026-133212-fastify-reply-from"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ecosystem": "npm",
+   "name": "left-pad",
+   "advisories": [
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0002",
+     "aliases": [
+      {
+       "scheme": "OSV",
+       "id": "MAL-FIXTURE-0002"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE paquete malicioso",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "critical",
+      "cvss": null,
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "unknown",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "npm",
+       "ecosystem_standard": true,
+       "name": "left-pad",
+       "name_original": "left-pad",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [
+        "1.3.0",
+        "1.3.1"
+       ],
+       "ranges": [],
+       "range_quality": "unknown",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "osv"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    }
+   ]
+  },
+  {
+   "ecosystem": "npm",
+   "name": "react",
+   "advisories": [
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0003",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-0000-0003"
+      }
+     ],
+     "status": "withdrawn",
+     "summary": "FIXTURE aviso retirado",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "low",
+      "cvss": null,
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "npm",
+       "ecosystem_standard": true,
+       "name": "react",
+       "name_original": "react",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "0"
+          },
+          {
+           "fixed": "99.0.0"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    }
+   ]
+  },
+  {
+   "ecosystem": "npm",
+   "name": "next",
+   "error_first_n": 1,
+   "advisories": [
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0004",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-0000-0004"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE rango GIT",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "high",
+      "cvss": {
+       "score": 7.5,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "npm",
+       "ecosystem_standard": true,
+       "name": "next",
+       "name_original": "next",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "GIT",
+         "events": [
+          {
+           "introduced": "abc123"
+          },
+          {
+           "fixed": "def456"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    }
+   ]
+  },
+  {
+   "ecosystem": "npm",
+   "name": "postcss",
+   "chunk": 1,
+   "advisories": [
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0005",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-0000-0005"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE conflicto entre fuentes",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "medium",
+      "cvss": {
+       "score": 5.3,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "npm",
+       "ecosystem_standard": true,
+       "name": "postcss",
+       "name_original": "postcss",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "0"
+          },
+          {
+           "fixed": "8.4.31"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "ghsa"
+      },
+      {
+       "ecosystem": "npm",
+       "ecosystem_standard": true,
+       "name": "postcss",
+       "name_original": "postcss",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "0"
+          },
+          {
+           "fixed": "8.4.30"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "osv"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": [
+       {
+        "type": "ranges_differ"
+       }
+      ]
+     },
+     "editorial": []
+    },
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0006",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-0000-0006"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE segunda página del componente",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "low",
+      "cvss": {
+       "score": 3.1,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "npm",
+       "ecosystem_standard": true,
+       "name": "postcss",
+       "name_original": "postcss",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "8.4.0"
+          },
+          {
+           "fixed": "8.4.40"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    }
+   ]
+  },
+  {
+   "ecosystem": "Packagist",
+   "name": "laravel/framework",
+   "advisories": [
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0007",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-0000-0007"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE laravel rama",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "high",
+      "cvss": {
+       "score": 8.1,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "Packagist",
+       "ecosystem_standard": true,
+       "name": "laravel/framework",
+       "name_original": "laravel/framework",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "composer",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "11.0.0"
+          },
+          {
+           "fixed": "11.31.0"
+          }
+         ]
+        },
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "10.0.0"
+          },
+          {
+           "fixed": "10.48.0"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    },
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0008",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-0000-0008"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE laravel rango insuficiente",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "medium",
+      "cvss": {
+       "score": 5.0,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "Packagist",
+       "ecosystem_standard": true,
+       "name": "laravel/framework",
+       "name_original": "laravel/framework",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "composer",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [],
+       "range_quality": "insufficient",
+       "range_notes": [
+        "límite inferior exclusivo no representable"
+       ],
+       "raw_range_text": "> 11.0, < 11.5",
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    }
+   ]
+  },
+  {
+   "ecosystem": "Go",
+   "name": "github.com/elazarl/goproxy",
+   "advisories": [
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0009",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-2026-133185"
+      },
+      {
+       "scheme": "GHSA",
+       "id": "GHSA-fixt-0009-bbbb"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE goproxy",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "critical",
+      "cvss": {
+       "score": 9.1,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "known_exploited",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "Go",
+       "ecosystem_standard": true,
+       "name": "github.com/elazarl/goproxy",
+       "name_original": "github.com/elazarl/goproxy",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "0"
+          },
+          {
+           "fixed": "1.9.4"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    },
+    {
+     "schema": "dzh-security/1",
+     "id": "vul_fixture0010",
+     "aliases": [
+      {
+       "scheme": "CVE",
+       "id": "CVE-0000-0010"
+      }
+     ],
+     "status": "active",
+     "summary": "FIXTURE goproxy otra rama",
+     "published": "2026-11-01T00:00:00Z",
+     "modified": "2026-11-20T10:00:00Z",
+     "severity": {
+      "label": "low",
+      "cvss": {
+       "score": 3.0,
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N",
+       "source": "GHSA"
+      },
+      "alternatives": []
+     },
+     "exploitation": {
+      "status": "not_listed_in_kev",
+      "source": "cisa_kev",
+      "checked_at": "2026-11-25T15:47:11Z"
+     },
+     "affected": [
+      {
+       "ecosystem": "Go",
+       "ecosystem_standard": true,
+       "name": "github.com/elazarl/goproxy",
+       "name_original": "github.com/elazarl/goproxy",
+       "purl": null,
+       "identity": {
+        "status": "verified"
+       },
+       "version_scheme": "semver",
+       "affected_status": "affected",
+       "versions": [],
+       "ranges": [
+        {
+         "type": "ECOSYSTEM",
+         "events": [
+          {
+           "introduced": "1.8.0"
+          },
+          {
+           "fixed": "1.8.5"
+          }
+         ]
+        }
+       ],
+       "range_quality": "usable",
+       "range_notes": [],
+       "raw_range_text": null,
+       "source": "ghsa"
+      }
+     ],
+     "quality": {
+      "normalization": "complete",
+      "identity": "verified",
+      "ranges": "usable",
+      "conflicts": []
+     },
+     "editorial": []
+    }
+   ]
+  }
+ ]
+}

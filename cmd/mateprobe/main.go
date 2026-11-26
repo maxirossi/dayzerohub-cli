@@ -1,4 +1,5 @@
-// Comando mateprobe: detecta tecnologías de sitios web localmente.
+// Comando mateprobe: detecta tecnologías de sitios web (scan) y audita
+// proyectos locales contra avisos de DayZeroHub (audit).
 package main
 
 import (
@@ -43,6 +44,8 @@ const usage = `mateprobe — detección local de tecnologías web
 
 Uso:
   mateprobe scan [opciones]
+  mateprobe login                                       (autoriza este equipo y guarda tu API key; ver: mateprobe logout)
+  mateprobe audit --path /ruta/al/proyecto [opciones]   (ver: mateprobe audit --help)
   mateprobe --version | --help
 
 Objetivos (al menos uno de --target / --input):
@@ -92,6 +95,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitOK
 	case "scan":
 		return runScan(args[1:], stdout, stderr)
+	case "audit":
+		return runAudit(args[1:], stdout, stderr)
+	case "login":
+		return runLogin(args[1:], stdout, stderr)
+	case "logout":
+		return runLogout(args[1:], stdout, stderr)
 	}
 	fmt.Fprintf(stderr, "comando desconocido %q\n\n%s", args[0], usage)
 	return exitUsage

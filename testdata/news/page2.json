@@ -1,0 +1,3 @@
+{"items":[
+{"slug":"cve-2026-000006-next","lang":"es","title":"CVE-2026-000006: Next.js middleware bypass","summary":"Next.js permite evadir middleware.","severity":"high","cvss_score":8.2,"known_exploited":false,"technology":"nodejs","vendor":"Vercel","product":"Next.js","ids":[{"scheme":"CVE","id":"CVE-2026-000006"}],"published_at":"2026-11-20T11:00:00+00:00","url":"https://dayzerohub.site/es/advisories/cve-2026-000006-next"}
+],"page":2,"page_size":20,"max_pages":2}
