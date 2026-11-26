@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io"
 	"math"
 	"net"
@@ -83,7 +84,7 @@ func Expand(inputs []string, opt Options) ([]Target, error) {
 		}
 		s, err := parse(in)
 		if err != nil {
-			return nil, fmt.Errorf("objetivo %q: %w", in, err)
+			return nil, fmt.Errorf(i18n.Tr("objetivo %q: %w", "target %q: %w"), in, err)
 		}
 		sources = append(sources, s)
 	}
@@ -92,12 +93,12 @@ func Expand(inputs []string, opt Options) ([]Target, error) {
 	for _, s := range sources {
 		n := s.size()
 		if n > uint64(opt.MaxAddresses) {
-			return nil, fmt.Errorf("objetivo %q abarca %s direcciones y supera el máximo de %d; usá --max-addresses para ampliarlo explícitamente",
+			return nil, fmt.Errorf(i18n.Tr("objetivo %q abarca %s direcciones y supera el máximo de %d; usá --max-addresses para ampliarlo explícitamente", "target %q spans %s addresses and exceeds the maximum of %d; use --max-addresses to raise it explicitly"),
 				s.input(), sizeString(n), opt.MaxAddresses)
 		}
 		total += n
 		if total > uint64(opt.MaxAddresses) {
-			return nil, fmt.Errorf("los objetivos suman más de %d direcciones; usá --max-addresses para ampliarlo explícitamente", opt.MaxAddresses)
+			return nil, fmt.Errorf(i18n.Tr("los objetivos suman más de %d direcciones; usá --max-addresses para ampliarlo explícitamente", "the targets add up to more than %d addresses; use --max-addresses to raise it explicitly"), opt.MaxAddresses)
 		}
 	}
 	seen := map[string]bool{}
@@ -191,7 +192,7 @@ func parse(in string) (source, error) {
 	}
 	if a, err := netip.ParseAddr(in); err == nil {
 		if a.Zone() != "" {
-			return nil, errors.New("las zonas IPv6 (%iface) no están soportadas")
+			return nil, errors.New(i18n.Tr("las zonas IPv6 (%iface) no están soportadas", "IPv6 zones (%iface) are not supported"))
 		}
 		a = a.Unmap()
 		return single{in: in, t: Target{Input: in, Host: a.String(), IsIP: true}, n: 1}, nil
@@ -200,7 +201,7 @@ func parse(in string) (source, error) {
 		if p, err := netip.ParsePrefix(in); err == nil {
 			p = p.Masked()
 			if p.Addr().Zone() != "" {
-				return nil, errors.New("las zonas IPv6 no están soportadas")
+				return nil, errors.New(i18n.Tr("las zonas IPv6 no están soportadas", "IPv6 zones are not supported"))
 			}
 			return ipRange{in: in, start: p.Addr(), end: lastAddr(p)}, nil
 		}
@@ -210,13 +211,13 @@ func parse(in string) (source, error) {
 		b, e2 := netip.ParseAddr(strings.TrimSpace(r))
 		if e1 == nil && e2 == nil {
 			if a.Zone() != "" || b.Zone() != "" {
-				return nil, errors.New("las zonas IPv6 no están soportadas")
+				return nil, errors.New(i18n.Tr("las zonas IPv6 no están soportadas", "IPv6 zones are not supported"))
 			}
 			if a.Is4() != b.Is4() {
-				return nil, errors.New("el rango mezcla IPv4 e IPv6")
+				return nil, errors.New(i18n.Tr("el rango mezcla IPv4 e IPv6", "the range mixes IPv4 and IPv6"))
 			}
 			if b.Less(a) {
-				return nil, errors.New("el rango termina antes de empezar")
+				return nil, errors.New(i18n.Tr("el rango termina antes de empezar", "the range ends before it starts"))
 			}
 			return ipRange{in: in, start: a, end: b}, nil
 		}
@@ -227,11 +228,11 @@ func parse(in string) (source, error) {
 func parseURL(in string) (source, error) {
 	u, err := url.Parse(in)
 	if err != nil {
-		return nil, fmt.Errorf("URL inválida: %w", err)
+		return nil, fmt.Errorf(i18n.Tr("URL inválida: %w", "invalid URL: %w"), err)
 	}
 	scheme := strings.ToLower(u.Scheme)
 	if scheme != "http" && scheme != "https" {
-		return nil, fmt.Errorf("esquema %q no soportado (solo http/https)", u.Scheme)
+		return nil, fmt.Errorf(i18n.Tr("esquema %q no soportado (solo http/https)", "scheme %q not supported (only http/https)"), u.Scheme)
 	}
 	t, err := buildTarget(in, scheme, u.Hostname(), u.Port(), u.EscapedPath(), u.RawQuery)
 	if err != nil {
@@ -243,10 +244,10 @@ func parseURL(in string) (source, error) {
 func parseHost(in string) (source, error) {
 	u, err := url.Parse("//" + in)
 	if err != nil {
-		return nil, fmt.Errorf("objetivo inválido: %w", err)
+		return nil, fmt.Errorf(i18n.Tr("objetivo inválido: %w", "invalid target: %w"), err)
 	}
 	if u.User != nil {
-		return nil, errors.New("no se admiten credenciales en el objetivo")
+		return nil, errors.New(i18n.Tr("no se admiten credenciales en el objetivo", "credentials are not allowed in the target"))
 	}
 	t, err := buildTarget(in, "", u.Hostname(), u.Port(), u.EscapedPath(), u.RawQuery)
 	if err != nil {
@@ -265,18 +266,18 @@ func ipCount(t Target) uint64 {
 func buildTarget(in, scheme, host, port, path, query string) (Target, error) {
 	t := Target{Input: in, Scheme: scheme}
 	if host == "" {
-		return t, errors.New("falta el host")
+		return t, errors.New(i18n.Tr("falta el host", "missing host"))
 	}
 	if port != "" {
 		p, err := strconv.Atoi(port)
 		if err != nil || p < 1 || p > 65535 {
-			return t, fmt.Errorf("puerto inválido %q", port)
+			return t, fmt.Errorf(i18n.Tr("puerto inválido %q", "invalid port %q"), port)
 		}
 		t.Port = p
 	}
 	if a, err := netip.ParseAddr(host); err == nil {
 		if a.Zone() != "" {
-			return t, errors.New("las zonas IPv6 no están soportadas")
+			return t, errors.New(i18n.Tr("las zonas IPv6 no están soportadas", "IPv6 zones are not supported"))
 		}
 		t.Host, t.IsIP = a.Unmap().String(), true
 	} else {
@@ -299,19 +300,19 @@ func buildTarget(in, scheme, host, port, path, query string) (Target, error) {
 func NormalizeHost(h string) (string, error) {
 	h = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(h)), ".")
 	if h == "" || len(h) > 253 {
-		return "", errors.New("hostname inválido")
+		return "", errors.New(i18n.Tr("hostname inválido", "invalid hostname"))
 	}
 	ascii, err := idna.Lookup.ToASCII(h)
 	if err != nil {
-		return "", fmt.Errorf("hostname inválido %q: %w", h, err)
+		return "", fmt.Errorf(i18n.Tr("hostname inválido %q: %w", "invalid hostname %q: %w"), h, err)
 	}
 	for _, label := range strings.Split(ascii, ".") {
 		if label == "" || len(label) > 63 {
-			return "", fmt.Errorf("hostname inválido %q", h)
+			return "", fmt.Errorf(i18n.Tr("hostname inválido %q", "invalid hostname %q"), h)
 		}
 		for _, c := range label {
 			if !(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-' || c == '_') {
-				return "", fmt.Errorf("hostname inválido %q", h)
+				return "", fmt.Errorf(i18n.Tr("hostname inválido %q", "invalid hostname %q"), h)
 			}
 		}
 	}
@@ -364,7 +365,7 @@ func be64(b []byte) uint64 {
 
 func sizeString(n uint64) string {
 	if n == math.MaxUint64 {
-		return "una cantidad astronómica de"
+		return i18n.Tr("una cantidad astronómica de", "an astronomical number of")
 	}
 	return strconv.FormatUint(n, 10)
 }
@@ -397,7 +398,7 @@ func NewExclusions(items []string) (*Exclusions, error) {
 		}
 		h, err := NormalizeHost(strings.TrimPrefix(it, "*."))
 		if err != nil {
-			return nil, fmt.Errorf("exclusión %q: %w", it, err)
+			return nil, fmt.Errorf(i18n.Tr("exclusión %q: %w", "exclusion %q: %w"), it, err)
 		}
 		e.domains = append(e.domains, h)
 	}

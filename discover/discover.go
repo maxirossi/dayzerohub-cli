@@ -32,6 +32,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -123,7 +124,7 @@ func Walk(ctx context.Context, root string, opts Options, fn func(e Entry) error
 		return Report{}, err
 	}
 	if st, err := os.Stat(real); err != nil || !st.IsDir() {
-		return Report{}, fmt.Errorf("%s no es un directorio", root)
+		return Report{}, fmt.Errorf(i18n.Tr("%s no es un directorio", "%s is not a directory"), root)
 	}
 	w := &walker{ctx: ctx, opts: opts, absRoot: abs, realRoot: real, fn: fn, visited: map[string]bool{real: true},
 		maxEntries: opts.MaxEntries, maxDepth: opts.MaxDepth}
@@ -140,15 +141,15 @@ func Walk(ctx context.Context, root string, opts Options, fn func(e Entry) error
 				continue
 			}
 			r, _ := parseLine(n + "/")
-			r.label = "regla por defecto: " + n
+			r.label = i18n.Tr("regla por defecto: ", "default rule: ") + n
 			w.defaults = append(w.defaults, r)
 		}
 		r, _ := parseLine("**/" + worktreesPath + "/")
-		r.label = "regla por defecto: " + worktreesPath
+		r.label = i18n.Tr("regla por defecto: ", "default rule: ") + worktreesPath
 		w.defaults = append(w.defaults, r)
-		w.rep.Rules = append(w.rep.Rules, "por defecto (directorios): "+strings.Join(append(append([]string{}, defaultDirNames...), worktreesPath), ", "))
+		w.rep.Rules = append(w.rep.Rules, i18n.Tr("por defecto (directorios): ", "default (directories): ")+strings.Join(append(append([]string{}, defaultDirNames...), worktreesPath), ", "))
 	} else {
-		w.rep.Rules = append(w.rep.Rules, "exclusiones por defecto desactivadas (--no-default-excludes); .git nunca se recorre")
+		w.rep.Rules = append(w.rep.Rules, i18n.Tr("exclusiones por defecto desactivadas (--no-default-excludes); .git nunca se recorre", "default exclusions disabled (--no-default-excludes); .git is never walked"))
 	}
 	w.excludes = userRules(opts.Excludes, "--exclude", true)
 	w.include = userRules(opts.Includes, "--include", false)
@@ -158,7 +159,7 @@ func Walk(ctx context.Context, root string, opts Options, fn func(e Entry) error
 	gitRoot := w.findGitRoot()
 	foundGit := gitRoot != ""
 	if opts.NoGitignore {
-		w.rep.Rules = append(w.rep.Rules, ".gitignore desactivado (--no-gitignore)")
+		w.rep.Rules = append(w.rep.Rules, i18n.Tr(".gitignore desactivado (--no-gitignore)", ".gitignore disabled (--no-gitignore)"))
 	} else {
 		if gitRoot == "" {
 			gitRoot = real
@@ -170,7 +171,7 @@ func Walk(ctx context.Context, root string, opts Options, fn func(e Entry) error
 			if b, err := os.ReadFile(filepath.Join(gitRoot, ".git", "info", "exclude")); err == nil {
 				if rs := parseRules(b, "", ".git/info/exclude"); len(rs) > 0 {
 					git = append(git, rs...)
-					w.gitLines = append(w.gitLines, fmt.Sprintf(".git/info/exclude (%d reglas)", len(rs)))
+					w.gitLines = append(w.gitLines, fmt.Sprintf(i18n.Tr(".git/info/exclude (%d reglas)", ".git/info/exclude (%d rules)"), len(rs)))
 				}
 			}
 		}
@@ -199,9 +200,9 @@ func Walk(ctx context.Context, root string, opts Options, fn func(e Entry) error
 		w.rep.Rules = append(w.rep.Rules, "--include: "+r.raw)
 	}
 	if opts.FollowSymlinks {
-		w.rep.Rules = append(w.rep.Rules, "symlinks: se siguen solo dentro de la raíz y sin ciclos")
+		w.rep.Rules = append(w.rep.Rules, i18n.Tr("symlinks: se siguen solo dentro de la raíz y sin ciclos", "symlinks: followed only inside the root and without cycles"))
 	} else {
-		w.rep.Rules = append(w.rep.Rules, "symlinks: no se siguen")
+		w.rep.Rules = append(w.rep.Rules, i18n.Tr("symlinks: no se siguen", "symlinks: not followed"))
 	}
 	sort.SliceStable(w.rep.Omitted, func(i, j int) bool { return w.rep.Omitted[i].Path < w.rep.Omitted[j].Path })
 	w.rep.Entries = w.count
@@ -237,7 +238,7 @@ func (w *walker) loadFile(dir, base string) []rule {
 	label := w.labelFor(base)
 	rs := parseRules(b, base, label)
 	if len(rs) > 0 {
-		w.gitLines = append(w.gitLines, fmt.Sprintf(".gitignore: %s (%d reglas)", label, len(rs)))
+		w.gitLines = append(w.gitLines, fmt.Sprintf(i18n.Tr(".gitignore: %s (%d reglas)", ".gitignore: %s (%d rules)"), label, len(rs)))
 	}
 	return rs
 }
@@ -251,7 +252,7 @@ func (w *walker) labelFor(base string) string {
 	case strings.HasPrefix(base, w.gitPref+"/"):
 		return joinRel(base[len(w.gitPref)+1:], ".gitignore")
 	}
-	return "(ancestro) " + joinRel(base, ".gitignore")
+	return i18n.Tr("(ancestro) ", "(ancestor) ") + joinRel(base, ".gitignore")
 }
 
 func joinRel(a, b string) string {
@@ -297,7 +298,7 @@ func (w *walker) decide(rel string, isDir bool, git []rule, st state) verdict {
 			if git[i].matches(g, isDir) {
 				v = verdict{excluded: !git[i].neg}
 				if v.excluded {
-					v.reason = fmt.Sprintf("ignorado por .gitignore (%s: %s)", git[i].label, git[i].raw)
+					v.reason = fmt.Sprintf(i18n.Tr("ignorado por .gitignore (%s: %s)", "ignored by .gitignore (%s: %s)"), git[i].label, git[i].raw)
 				}
 			}
 		}
@@ -317,7 +318,7 @@ func (w *walker) decide(rel string, isDir bool, git []rule, st state) verdict {
 		v = verdict{excluded: true}
 	case st.trackedOnly && !v.excluded:
 		if !(isDir && w.trackedDirs[rel]) && !trackedFile {
-			v = verdict{excluded: true, reason: "dentro de un directorio ignorado por .gitignore, sin archivos tracked"}
+			v = verdict{excluded: true, reason: i18n.Tr("dentro de un directorio ignorado por .gitignore, sin archivos tracked", "inside a directory ignored by .gitignore, with no tracked files")}
 		}
 	case isDir && v.excluded && !hard.excluded && !silent && !st.trackedOnly && w.trackedDirs[rel]:
 		v = verdict{trackedDir: true}
@@ -379,7 +380,7 @@ func (w *walker) walkDir(readPath, rel, realDir string, git []rule, st state) er
 	}
 	des, err := os.ReadDir(readPath)
 	if err != nil {
-		w.rep.Errors = append(w.rep.Errors, fmt.Sprintf("no se pudo leer %s: %v", displayRel(rel), err))
+		w.rep.Errors = append(w.rep.Errors, fmt.Sprintf(i18n.Tr("no se pudo leer %s: %v", "could not read %s: %v"), displayRel(rel), err))
 		return nil
 	}
 	for _, de := range des {
@@ -450,7 +451,7 @@ func (w *walker) walkDir(readPath, rel, realDir string, git []rule, st state) er
 			if !silent {
 				reason := v.reason
 				if descend {
-					reason += " (re-incluido parcialmente por --include)"
+					reason += i18n.Tr(" (re-incluido parcialmente por --include)", " (partially re-included by --include)")
 				}
 				w.rep.Omitted = append(w.rep.Omitted, Omitted{erel, reason})
 			}

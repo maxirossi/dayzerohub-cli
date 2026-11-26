@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -274,7 +275,7 @@ func (c *Client) Lookup(ctx context.Context, comps []LookupComponent) SecurityRe
 				return out
 			}
 			if len(resp.Results) != len(batch) {
-				out.Err = fmt.Errorf("el lookup devolvió %d resultados para %d componentes", len(resp.Results), len(batch))
+				out.Err = fmt.Errorf(i18n.Tr("el lookup devolvió %d resultados para %d componentes", "the lookup returned %d results for %d components"), len(resp.Results), len(batch))
 				return out
 			}
 			for k, idx := range batch {
@@ -287,7 +288,7 @@ func (c *Client) Lookup(ctx context.Context, comps []LookupComponent) SecurityRe
 				}
 				switch {
 				case r.Status == StatusError:
-					res.Err = "falló la consulta de este componente en el servidor"
+					res.Err = i18n.Tr("falló la consulta de este componente en el servidor", "the server failed to query this component")
 					if round == 0 {
 						next = append(next, idx)
 					}

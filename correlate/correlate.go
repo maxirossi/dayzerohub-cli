@@ -6,6 +6,7 @@ package correlate
 
 import (
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"regexp"
 	"sort"
 	"strings"
@@ -24,9 +25,9 @@ const (
 // LevelLabel devuelve la etiqueta humana de un nivel.
 func LevelLabel(l string) string {
 	if l == LevelComponent {
-		return "Coincidencia de componente; afectación por versión sin verificar"
+		return i18n.Tr("Coincidencia de componente; afectación por versión sin verificar", "Component match; version-based impact not verified")
 	}
-	return "Posible coincidencia textual; requiere revisión"
+	return i18n.Tr("Posible coincidencia textual; requiere revisión", "Possible text match; needs review")
 }
 
 // Match relaciona un componente local con un aviso.
@@ -271,29 +272,29 @@ func (x *index) match(a dzh.Advisory) []Match {
 		switch c.Ecosystem {
 		case inventory.EcoNPM, inventory.EcoComposer:
 			if hasProduct && product == name {
-				fields, via = append(fields, "product"), "identificador exacto del paquete"
+				fields, via = append(fields, "product"), i18n.Tr("identificador exacto del paquete", "exact package identifier")
 			}
 			if vendor == name && name != "" {
-				fields, via = append(fields, "vendor"), "identificador exacto del paquete"
+				fields, via = append(fields, "vendor"), i18n.Tr("identificador exacto del paquete", "exact package identifier")
 			}
 		case inventory.EcoGo:
 			if hasProduct && product == name {
-				fields, via = append(fields, "product"), "identificador exacto del módulo"
+				fields, via = append(fields, "product"), i18n.Tr("identificador exacto del módulo", "exact module identifier")
 			} else if o, r, ok := goTail(c.Name); ok && vendor == o && product == r {
-				fields, via = []string{"vendor", "product"}, "owner/repositorio del módulo coinciden con vendor/product"
+				fields, via = []string{"vendor", "product"}, i18n.Tr("owner/repositorio del módulo coinciden con vendor/product", "module owner/repository match vendor/product")
 			}
 		case inventory.EcoWP:
 			if c.Kind == inventory.KindPlugin && hasProduct {
 				np := norm(product)
 				if np != "" && (np == norm(c.Name) || containsNorm(c.Aliases, np)) {
-					fields, via = append(fields, "product"), "nombre o slug del plugin coinciden con el producto"
+					fields, via = append(fields, "product"), i18n.Tr("nombre o slug del plugin coinciden con el producto", "plugin name or slug match the product")
 				}
 			}
 		}
 		// 2. Alias explícito y acotado (frameworks/lenguajes conocidos).
 		if via == "" && hasProduct {
 			if al, ok := aliasProducts[name]; ok && contains(al, product) {
-				fields, via = append(fields, "product"), "alias explícito"
+				fields, via = append(fields, "product"), i18n.Tr("alias explícito", "explicit alias")
 			}
 		}
 		if via != "" {
@@ -328,7 +329,7 @@ func (x *index) match(a dzh.Advisory) []Match {
 		if t := strings.ToLower(strings.TrimSpace(a.Technology)); t != "" && techAgrees(t, c) {
 			f = append(f, "technology")
 		}
-		out = append(out, Match{Level: LevelText, Component: c, Fields: f, Via: "mención precisa en el texto del aviso"})
+		out = append(out, Match{Level: LevelText, Component: c, Fields: f, Via: i18n.Tr("mención precisa en el texto del aviso", "precise mention in the advisory text")})
 	}
 	return out
 }
@@ -422,26 +423,26 @@ func limitations(m Match, a dzh.Advisory) []string {
 	c := m.Component
 	switch c.State {
 	case inventory.StateUnknown:
-		l = append(l, "la versión local es desconocida: no puede compararse con el aviso")
+		l = append(l, i18n.Tr("la versión local es desconocida: no puede compararse con el aviso", "the local version is unknown: it cannot be compared with the advisory"))
 	case inventory.StateConstraint:
-		l = append(l, fmt.Sprintf("la versión local es una restricción declarada (%s), no una versión resuelta", c.Constraint))
+		l = append(l, fmt.Sprintf(i18n.Tr("la versión local es una restricción declarada (%s), no una versión resuelta", "the local version is a declared constraint (%s), not a resolved version"), c.Constraint))
 	default:
-		l = append(l, "la versión local no se comparó con las versiones afectadas: el feed no incluye rangos estructurados")
+		l = append(l, i18n.Tr("la versión local no se comparó con las versiones afectadas: el feed no incluye rangos estructurados", "the local version was not compared with the affected versions: the feed has no structured ranges"))
 	}
 	for _, t := range []string{a.Title, a.Summary} {
 		if h := versionHint.FindString(t); h != "" {
-			l = append(l, fmt.Sprintf("el texto del aviso menciona «%s»; no se interpretó como rango afectado", h))
+			l = append(l, fmt.Sprintf(i18n.Tr("el texto del aviso menciona «%s»; no se interpretó como rango afectado", "the advisory text mentions «%s»; it was not interpreted as an affected range"), h))
 			break
 		}
 	}
 	if m.Level == LevelText {
-		l = append(l, "coincidencia basada solo en texto libre; puede referirse a otro producto")
+		l = append(l, i18n.Tr("coincidencia basada solo en texto libre; puede referirse a otro producto", "match based on free text only; it may refer to another product"))
 	}
 	if c.Kind == inventory.KindPlugin {
-		l = append(l, "el plugin está presente en disco; no se verificó que esté activo")
+		l = append(l, i18n.Tr("el plugin está presente en disco; no se verificó que esté activo", "the plugin is present on disk; it was not verified to be active"))
 	}
 	if c.Scope == inventory.ScopeDev {
-		l = append(l, "dependencia de desarrollo")
+		l = append(l, i18n.Tr("dependencia de desarrollo", "development dependency"))
 	}
 	return l
 }

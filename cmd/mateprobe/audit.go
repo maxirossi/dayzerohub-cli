@@ -26,6 +26,7 @@ import (
 	"github.com/maxirossi/mateprobe/correlate"
 	"github.com/maxirossi/mateprobe/credentials"
 	"github.com/maxirossi/mateprobe/dzh"
+	"github.com/maxirossi/mateprobe/i18n"
 	"github.com/maxirossi/mateprobe/inventory"
 )
 
@@ -84,7 +85,7 @@ var (
 func runAudit(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("audit", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	fs.Usage = func() { fmt.Fprint(stderr, auditUsage) }
+	fs.Usage = func() { fmt.Fprint(stderr, auditUsageText()) }
 	var (
 		path    = fs.String("path", "", "")
 		envFile = fs.String("env-file", "", "")
@@ -115,13 +116,13 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 	}
 	fail := func(err error) int { fmt.Fprintf(stderr, "error: %v\n", err); return exitUsage }
 	if fs.NArg() > 0 {
-		return fail(fmt.Errorf("argumento inesperado %q (usá --path)", fs.Arg(0)))
+		return fail(fmt.Errorf(i18n.Tr("argumento inesperado %q (usá --path)", "unexpected argument %q (use --path)"), fs.Arg(0)))
 	}
 	if strings.TrimSpace(*path) == "" {
-		return fail(errors.New("--path es obligatorio"))
+		return fail(errors.New(i18n.Tr("--path es obligatorio", "--path is required")))
 	}
 	if st, err := os.Stat(*path); err != nil || !st.IsDir() {
-		return fail(fmt.Errorf("--path %q no es un directorio accesible", *path))
+		return fail(fmt.Errorf(i18n.Tr("--path %q no es un directorio accesible", "--path %q is not an accessible directory"), *path))
 	}
 
 	// Archivo de configuración (no es el .env del proyecto analizado).
@@ -156,21 +157,22 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	fmt.Fprintf(stderr, "Analizando %s ...\n", *path)
+	printBanner(stderr)
+	fmt.Fprintf(stderr, i18n.Tr("Analizando %s ...\n", "Analyzing %s ...\n"), *path)
 	mopts := inventory.MavenOptions{Resolve: *mvnResolve, Bin: *mvnBin, Timeout: *mvnTimeout, Profiles: profiles}
 	if *mvnResolve {
-		fmt.Fprintln(stderr, "AVISO: --maven-resolve ejecuta Maven sobre el proyecto: puede descargar artefactos y ejecutar plugins del proyecto auditado.")
+		fmt.Fprintln(stderr, i18n.Tr("AVISO: --maven-resolve ejecuta Maven sobre el proyecto: puede descargar artefactos y ejecutar plugins del proyecto auditado.", "WARNING: --maven-resolve runs Maven on the project: it may download artifacts and run plugins of the audited project."))
 	}
 	inv, err := inventory.AnalyzeWith(ctx, *path, inventory.Options{Excludes: excludes, Includes: includes, NoGitignore: *noIgnore, NoGitIndex: *noIndex,
 		NoDefaultExcludes: *noDefaults, FollowSymlinks: *follow, Maven: mopts})
 	if err != nil {
 		if ctx.Err() != nil {
-			fmt.Fprintln(stderr, "Interrumpido antes de terminar el inventario; no se generó informe.")
+			fmt.Fprintln(stderr, i18n.Tr("Interrumpido antes de terminar el inventario; no se generó informe.", "Interrupted before the inventory finished; no report was generated."))
 			return exitInterrupted
 		}
 		return fail(err)
 	}
-	fmt.Fprintf(stderr, "Inventario: %d subproyectos, %d componentes (%d directorios omitidos). Consultando DayZeroHub ...\n", len(inv.Subprojects), len(inv.Components), len(inv.Omitted))
+	fmt.Fprintf(stderr, i18n.Tr("Inventario: %d subproyectos, %d componentes (%d directorios omitidos). Consultando DayZeroHub ...\n", "Inventory: %d subprojects, %d components (%d directories skipped). Querying DayZeroHub ...\n"), len(inv.Subprojects), len(inv.Components), len(inv.Omitted))
 
 	cl := dzh.New(auditBaseURL, set.APIKey)
 	cl.UserAgent = "mateprobe/" + version
@@ -191,16 +193,16 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 		newsKey = set.APIKey // compatibilidad: la key estática servía para ambas APIs
 	}
 	if !unauthorized && newsKey == "" {
-		fmt.Fprintln(stderr, "Feed editorial omitido: definí news_api_key para incluirlo (la key de mateprobe login solo vale para la API técnica).")
+		fmt.Fprintln(stderr, i18n.Tr("Feed editorial omitido: definí news_api_key para incluirlo (la key de mateprobe login solo vale para la API técnica).", "Editorial feed skipped: set news_api_key to include it (the key from mateprobe login only works for the technical API)."))
 	}
 	if !unauthorized && newsKey != "" {
-		fmt.Fprintln(stderr, "Consultando el feed editorial ...")
+		fmt.Fprintln(stderr, i18n.Tr("Consultando el feed editorial ...", "Querying the editorial feed ..."))
 		nl := dzh.New(auditBaseURL, newsKey)
 		nl.UserAgent = cl.UserAgent
 		qres = nl.Fetch(ctx)
 		queried = true
 		if qres.Err != nil {
-			fmt.Fprintf(stderr, "AVISO: feed editorial: %v\n", qres.Err)
+			fmt.Fprintf(stderr, i18n.Tr("AVISO: feed editorial: %v\n", "WARNING: editorial feed: %v\n"), qres.Err)
 		}
 	}
 	interrupted := ctx.Err() != nil
@@ -213,7 +215,7 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 		Query: qres, Queried: queried, Interrupted: interrupted, Correlation: corr, Security: sec, ExportDir: absOrEmpty(*exportDir)})
 	if *exportDir != "" {
 		if err := auditreport.ExportAll(*exportDir, inv, sec.Tech); err != nil {
-			return fail(fmt.Errorf("no se pudo exportar el detalle: %w", err))
+			return fail(fmt.Errorf(i18n.Tr("no se pudo exportar el detalle: %w", "could not export the detail: %w"), err))
 		}
 	}
 
@@ -230,14 +232,14 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 		err = cerr
 	}
 	if err != nil {
-		return fail(fmt.Errorf("no se pudo escribir el informe: %w", err))
+		return fail(fmt.Errorf(i18n.Tr("no se pudo escribir el informe: %w", "could not write the report: %w"), err))
 	}
 
 	printAuditSummary(stdout, view, qres, corr, outPath)
 	secIncomplete := sec.Skipped != "" || sec.CatalogErr != nil || sec.Result.Err != nil
 	if *open {
 		if err := auditOpen(outPath); err != nil {
-			fmt.Fprintf(stderr, "AVISO: no se pudo abrir el informe (%v). Sigue disponible en %s\n", err, outPath)
+			fmt.Fprintf(stderr, i18n.Tr("AVISO: no se pudo abrir el informe (%v). Sigue disponible en %s\n", "WARNING: could not open the report (%v). It is still available at %s\n"), err, outPath)
 		}
 	}
 	switch {
@@ -258,19 +260,19 @@ func printAuditSummary(w io.Writer, v auditreport.View, q dzh.Result, c correlat
 			text++
 		}
 	}
-	fmt.Fprintf(w, "Estado: %s · %s\n", v.Status, v.Coverage)
+	fmt.Fprintf(w, i18n.Tr("Estado: %s · %s\n", "Status: %s · %s\n"), v.Status, v.Coverage)
 	for _, kv := range v.Summary {
 		fmt.Fprintf(w, "  %s: %s\n", kv.Key, kv.Value)
 	}
-	fmt.Fprintf(w, "Feed editorial: %d avisos consultados (%d páginas) · relacionados: %d coincidencias de componente, %d posibles coincidencias textuales\n",
+	fmt.Fprintf(w, i18n.Tr("Feed editorial: %d avisos consultados (%d páginas) · relacionados: %d coincidencias de componente, %d posibles coincidencias textuales\n", "Editorial feed: %d advisories queried (%d pages) · related: %d component matches, %d possible text matches\n"),
 		len(q.Advisories), q.PagesFetched, comp, text)
-	fmt.Fprintf(w, "Informe: %s\n", path)
+	fmt.Fprintf(w, i18n.Tr("Informe: %s\n", "Report: %s\n"), path)
 	uri := fileURI(path)
 	if isTTY(w) {
-		fmt.Fprintf(w, "Abrir informe: %s\n", osc8(uri, "Abrir informe"))
-		fmt.Fprintf(w, "(si tu terminal no admite enlaces, copiá esta URL: %s)\n", uri)
+		fmt.Fprintf(w, i18n.Tr("Abrir informe: %s\n", "Open report: %s\n"), osc8(uri, i18n.Tr("Abrir informe", "Open report")))
+		fmt.Fprintf(w, i18n.Tr("(si tu terminal no admite enlaces, copiá esta URL: %s)\n", "(if your terminal does not support links, copy this URL: %s)\n"), uri)
 	} else {
-		fmt.Fprintf(w, "Abrir informe: %s\n", uri)
+		fmt.Fprintf(w, i18n.Tr("Abrir informe: %s\n", "Open report: %s\n"), uri)
 	}
 }
 
@@ -392,9 +394,9 @@ func querySecurity(ctx context.Context, cl *dzh.Client, comps []inventory.Compon
 	cat, err := cl.Catalog(ctx)
 	if err != nil {
 		si.CatalogErr = err
-		fmt.Fprintf(stderr, "AVISO: catálogo técnico: %v\n", err)
+		fmt.Fprintf(stderr, i18n.Tr("AVISO: catálogo técnico: %v\n", "WARNING: technical catalog: %v\n"), err)
 		if isUnauthorized(err) {
-			si.Skipped = "la API key fue rechazada; no se hicieron más consultas"
+			si.Skipped = i18n.Tr("la API key fue rechazada; no se hicieron más consultas", "the API key was rejected; no further queries were made")
 			return si, true
 		}
 	} else {
@@ -404,12 +406,12 @@ func querySecurity(ctx context.Context, cl *dzh.Client, comps []inventory.Compon
 	if len(ids) == 0 {
 		return si, false
 	}
-	fmt.Fprintf(stderr, "Consultando la API técnica (%d identidades) ...\n", len(ids))
+	fmt.Fprintf(stderr, i18n.Tr("Consultando la API técnica (%d identidades) ...\n", "Querying the technical API (%d identities) ...\n"), len(ids))
 	si.Result = cl.Lookup(ctx, ids)
 	if si.Result.Err != nil {
-		fmt.Fprintf(stderr, "AVISO: consulta técnica: %v\n", si.Result.Err)
+		fmt.Fprintf(stderr, i18n.Tr("AVISO: consulta técnica: %v\n", "WARNING: technical query: %v\n"), si.Result.Err)
 		if isUnauthorized(si.Result.Err) {
-			si.Skipped = "la API key fue rechazada; no se hicieron más consultas"
+			si.Skipped = i18n.Tr("la API key fue rechazada; no se hicieron más consultas", "the API key was rejected; no further queries were made")
 			si.Tech = correlate.Technical(comps, si.Result)
 			return si, true
 		}

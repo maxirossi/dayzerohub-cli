@@ -18,6 +18,7 @@ import (
 	"github.com/maxirossi/mateprobe/collect"
 	"github.com/maxirossi/mateprobe/detect"
 	"github.com/maxirossi/mateprobe/export"
+	"github.com/maxirossi/mateprobe/i18n"
 	"github.com/maxirossi/mateprobe/model"
 	"github.com/maxirossi/mateprobe/scan"
 	"github.com/maxirossi/mateprobe/targets"
@@ -82,13 +83,26 @@ Códigos de salida:
 func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
 
 func run(args []string, stdout, stderr io.Writer) int {
+	args, lang := i18n.Extract(args)
+	if lang == "" {
+		lang = i18n.FromEnv()
+	} else if _, ok := i18n.Normalize(lang); !ok {
+		fmt.Fprintf(stderr, "error: --lang %q (es, en)\n", lang)
+		return exitUsage
+	}
+	i18n.Set(lang)
+	if u := strings.TrimSpace(os.Getenv("MATEPROBE_BASE_URL")); u != "" { // desarrollo/pruebas: apuntar a otro DayZeroHub
+		auditBaseURL = u
+	}
 	if len(args) == 0 {
-		fmt.Fprint(stderr, usage)
+		printBanner(stderr)
+		fmt.Fprint(stderr, usageText())
 		return exitUsage
 	}
 	switch args[0] {
 	case "-h", "--help", "help", "-help":
-		fmt.Fprint(stdout, usage)
+		printBanner(stdout)
+		fmt.Fprint(stdout, usageText())
 		return exitOK
 	case "-v", "--version", "version", "-version":
 		fmt.Fprintf(stdout, "mateprobe %s (%s)\n", version, detect.EngineName())
@@ -102,14 +116,14 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "logout":
 		return runLogout(args[1:], stdout, stderr)
 	}
-	fmt.Fprintf(stderr, "comando desconocido %q\n\n%s", args[0], usage)
+	fmt.Fprintf(stderr, i18n.Tr("comando desconocido %q\n\n%s", "unknown command %q\n\n%s"), args[0], usageText())
 	return exitUsage
 }
 
 func runScan(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("scan", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	fs.Usage = func() { fmt.Fprint(stderr, usage) }
+	fs.Usage = func() { fmt.Fprint(stderr, usageText()) }
 	var (
 		tgt, inputs, excl, ports, resolve, allow multi
 		maxAddr                                  = fs.Int("max-addresses", targets.DefaultMaxAddresses, "")
@@ -139,13 +153,13 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 	fail := func(err error) int { fmt.Fprintf(stderr, "error: %v\n", err); return exitUsage }
 
 	if fs.NArg() > 0 {
-		return fail(fmt.Errorf("argumento inesperado %q (usá --target)", fs.Arg(0)))
+		return fail(fmt.Errorf(i18n.Tr("argumento inesperado %q (usá --target)", "unexpected argument %q (use --target)"), fs.Arg(0)))
 	}
 	if !contains(export.Formats, *format) {
-		return fail(fmt.Errorf("--format %q inválido (opciones: %s)", *format, strings.Join(export.Formats, ", ")))
+		return fail(fmt.Errorf(i18n.Tr("--format %q inválido (opciones: %s)", "--format %q is invalid (options: %s)"), *format, strings.Join(export.Formats, ", ")))
 	}
 	if *conc < 1 || *maxRedir < 0 || *maxBody < 1 || *timeout <= 0 || *rateV < 0 || *maxAddr < 1 {
-		return fail(errors.New("valores numéricos inválidos (concurrency>=1, timeout>0, rate>=0, max-redirects>=0, max-body>=1, max-addresses>=1)"))
+		return fail(errors.New(i18n.Tr("valores numéricos inválidos (concurrency>=1, timeout>0, rate>=0, max-redirects>=0, max-body>=1, max-addresses>=1)", "invalid numeric values (concurrency>=1, timeout>0, rate>=0, max-redirects>=0, max-body>=1, max-addresses>=1)")))
 	}
 
 	exps, err := targets.NewExclusions(excl)
@@ -173,14 +187,14 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		exprs = append(exprs, lines...)
 	}
 	if len(exprs) == 0 {
-		return fail(errors.New("indicá al menos un objetivo con --target o --input"))
+		return fail(errors.New(i18n.Tr("indicá al menos un objetivo con --target o --input", "specify at least one target with --target or --input")))
 	}
 	list, err := targets.Expand(exprs, targets.Options{MaxAddresses: *maxAddr, Exclusions: exps})
 	if err != nil {
 		return fail(err)
 	}
 	if len(list) == 0 {
-		return fail(errors.New("no quedaron objetivos tras aplicar exclusiones"))
+		return fail(errors.New(i18n.Tr("no quedaron objetivos tras aplicar exclusiones", "no targets left after applying exclusions")))
 	}
 
 	// Abrir la salida antes de escanear, para fallar rápido.
@@ -197,7 +211,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 
 	eng, err := detect.New()
 	if err != nil {
-		return fail(fmt.Errorf("no se pudo inicializar el motor de detección: %w", err))
+		return fail(fmt.Errorf(i18n.Tr("no se pudo inicializar el motor de detección: %w", "could not initialize the detection engine: %w"), err))
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -214,10 +228,10 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 	}
 	if !*quiet {
 		if *insecure {
-			fmt.Fprintln(stderr, "AVISO: --insecure desactiva la validación de certificados TLS.")
+			fmt.Fprintln(stderr, i18n.Tr("AVISO: --insecure desactiva la validación de certificados TLS.", "WARNING: --insecure disables TLS certificate validation."))
 		}
 		cfg.Progress = func(done, total int, r model.TargetResult) {
-			fmt.Fprintf(stderr, "[%d/%d] %s → %s (%d tecnologías)\n", done, total, r.Target, r.Status, len(r.Technologies))
+			fmt.Fprintf(stderr, i18n.Tr("[%d/%d] %s → %s (%d tecnologías)\n", "[%d/%d] %s → %s (%d technologies)\n"), done, total, r.Target, r.Status, len(r.Technologies))
 		}
 	}
 
@@ -231,7 +245,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 			return fail(err)
 		}
 		if !*quiet {
-			fmt.Fprintf(stderr, "Resultado escrito en %s\n", fileLink(stderr, *output))
+			fmt.Fprintf(stderr, i18n.Tr("Resultado escrito en %s\n", "Result written to %s\n"), fileLink(stderr, *output))
 		}
 	}
 	return exitCode(rep)

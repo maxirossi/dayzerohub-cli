@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io"
 	"math/rand/v2"
 	"net/http"
@@ -94,7 +95,9 @@ type Error struct {
 	Msg    string
 }
 
-func (e *Error) Error() string { return fmt.Sprintf("DayZeroHub respondió %d: %s", e.Status, e.Msg) }
+func (e *Error) Error() string {
+	return fmt.Sprintf(i18n.Tr("DayZeroHub respondió %d: %s", "DayZeroHub responded %d: %s"), e.Status, e.Msg)
+}
 
 // Client consulta la API.
 type Client struct {
@@ -119,11 +122,11 @@ func New(baseURL, apiKey string) *Client {
 // paso de https a un esquema no seguro.
 func checkRedirect(req *http.Request, via []*http.Request) error {
 	if len(via) >= 3 {
-		return errors.New("demasiadas redirecciones")
+		return errors.New(i18n.Tr("demasiadas redirecciones", "too many redirects"))
 	}
 	first := via[0].URL
 	if first.Scheme == "https" && req.URL.Scheme != "https" {
-		return errors.New("redirección a un esquema no seguro rechazada")
+		return errors.New(i18n.Tr("redirección a un esquema no seguro rechazada", "redirect to an insecure scheme rejected"))
 	}
 	if req.URL.Scheme != first.Scheme || req.URL.Host != first.Host {
 		req.Header.Del(apiKeyHeader)
@@ -160,12 +163,12 @@ func (c *Client) Fetch(ctx context.Context) Result {
 	if last > hardPageCap {
 		last = hardPageCap
 		res.Limited = true
-		res.Notes = append(res.Notes, fmt.Sprintf("se limitó localmente a %d páginas", hardPageCap))
+		res.Notes = append(res.Notes, fmt.Sprintf(i18n.Tr("se limitó localmente a %d páginas", "locally limited to %d pages"), hardPageCap))
 	}
 	for p := 2; p <= last; p++ {
 		pr, err := c.fetchPage(ctx, p, &res)
 		if err != nil {
-			res.Err = fmt.Errorf("página %d: %w", p, err)
+			res.Err = fmt.Errorf(i18n.Tr("página %d: %w", "page %d: %w"), p, err)
 			return res
 		}
 		res.record(pr)
@@ -176,7 +179,7 @@ func (c *Client) Fetch(ctx context.Context) Result {
 	res.Complete = true
 	if res.MaxPages > 0 && res.PagesFetched >= res.MaxPages {
 		res.Limited = true
-		res.Notes = append(res.Notes, fmt.Sprintf("el proveedor expone como máximo %d páginas de %d avisos; los avisos más antiguos no están disponibles en esta consulta", res.MaxPages, res.PageSize))
+		res.Notes = append(res.Notes, fmt.Sprintf(i18n.Tr("el proveedor expone como máximo %d páginas de %d avisos; los avisos más antiguos no están disponibles en esta consulta", "the provider exposes at most %d pages of %d advisories; older advisories are not available in this query"), res.MaxPages, res.PageSize))
 	}
 	return res
 }
@@ -193,7 +196,7 @@ func (c *Client) fetchPage(ctx context.Context, n int, res *Result) (pageResp, e
 		return pageResp{}, err
 	}
 	if pr.Items == nil {
-		return pageResp{}, errors.New("la respuesta no contiene la lista \"items\"")
+		return pageResp{}, errors.New(i18n.Tr("la respuesta no contiene la lista \"items\"", "the response does not contain the \"items\" list"))
 	}
 	return pr, nil
 }
@@ -204,7 +207,7 @@ func (c *Client) fetchPage(ctx context.Context, n int, res *Result) (pageResp, e
 func (c *Client) call(ctx context.Context, method, path string, query url.Values, body []byte, out any, retries *int) error {
 	base, err := url.Parse(c.BaseURL)
 	if err != nil || base.Host == "" {
-		return errors.New("URL base inválida")
+		return errors.New(i18n.Tr("URL base inválida", "invalid base URL"))
 	}
 	u := base.JoinPath(path)
 	u.RawQuery = query.Encode()
@@ -218,7 +221,7 @@ func (c *Client) call(ctx context.Context, method, path string, query url.Values
 		data, wait, retry, err := c.once(ctx, method, u.String(), body)
 		if err == nil {
 			if err := json.Unmarshal(data, out); err != nil {
-				return fmt.Errorf("JSON inválido en la respuesta: %w", err)
+				return fmt.Errorf(i18n.Tr("JSON inválido en la respuesta: %w", "invalid JSON in the response: %w"), err)
 			}
 			return nil
 		}
@@ -231,7 +234,7 @@ func (c *Client) call(ctx context.Context, method, path string, query url.Values
 			wait = d + time.Duration(rand.Int64N(int64(d)/4+1)) // jitter
 		}
 		if wait > maxRetryAfter {
-			return fmt.Errorf("%w (Retry-After de %s supera el máximo de espera)", err, wait.Round(time.Second))
+			return fmt.Errorf(i18n.Tr("%w (Retry-After de %s supera el máximo de espera)", "%w (Retry-After of %s exceeds the maximum wait)"), err, wait.Round(time.Second))
 		}
 		if retries != nil {
 			*retries++
@@ -271,7 +274,7 @@ func (c *Client) once(ctx context.Context, method, rawURL string, body []byte) (
 		if errors.As(err, &ue) {
 			err = ue.Err
 		}
-		return nil, 0, true, fmt.Errorf("error de red: %w", err)
+		return nil, 0, true, fmt.Errorf(i18n.Tr("error de red: %w", "network error: %w"), err)
 	}
 	defer resp.Body.Close()
 
@@ -281,10 +284,10 @@ func (c *Client) once(ctx context.Context, method, rawURL string, body []byte) (
 	}
 	data, rerr := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 	if rerr != nil {
-		return nil, 0, true, fmt.Errorf("error leyendo la respuesta: %w", rerr)
+		return nil, 0, true, fmt.Errorf(i18n.Tr("error leyendo la respuesta: %w", "error reading the response: %w"), rerr)
 	}
 	if int64(len(data)) > limit {
-		return nil, 0, false, fmt.Errorf("la respuesta supera el límite de %d bytes", limit)
+		return nil, 0, false, fmt.Errorf(i18n.Tr("la respuesta supera el límite de %d bytes", "the response exceeds the limit of %d bytes"), limit)
 	}
 
 	switch s := resp.StatusCode; {
@@ -292,17 +295,17 @@ func (c *Client) once(ctx context.Context, method, rawURL string, body []byte) (
 		return data, 0, false, nil
 	case s == http.StatusUnauthorized:
 		// Sin reintentos: los 401 repetidos pueden banear la IP.
-		return nil, 0, false, &Error{s, "api_key inválida o ausente"}
+		return nil, 0, false, &Error{s, i18n.Tr("api_key inválida o ausente", "invalid or missing api_key")}
 	case s == http.StatusForbidden:
-		return nil, 0, false, &Error{s, "la API key no tiene permisos para este recurso"}
+		return nil, 0, false, &Error{s, i18n.Tr("la API key no tiene permisos para este recurso", "the API key does not have permission for this resource")}
 	case s == http.StatusBadRequest:
-		return nil, 0, false, &Error{s, "solicitud inválida (¿cursor inválido o de otros filtros?)"}
+		return nil, 0, false, &Error{s, i18n.Tr("solicitud inválida (¿cursor inválido o de otros filtros?)", "invalid request (invalid cursor or one from other filters?)")}
 	case s == http.StatusUnprocessableEntity:
-		return nil, 0, false, &Error{s, "parámetros inválidos"}
+		return nil, 0, false, &Error{s, i18n.Tr("parámetros inválidos", "invalid parameters")}
 	case s == http.StatusTooManyRequests:
-		return nil, retryAfter(resp.Header.Get("Retry-After")), true, &Error{s, "límite de solicitudes alcanzado"}
+		return nil, retryAfter(resp.Header.Get("Retry-After")), true, &Error{s, i18n.Tr("límite de solicitudes alcanzado", "rate limit reached")}
 	case s >= 500:
-		return nil, retryAfter(resp.Header.Get("Retry-After")), true, &Error{s, "error del servidor"}
+		return nil, retryAfter(resp.Header.Get("Retry-After")), true, &Error{s, i18n.Tr("error del servidor", "server error")}
 	default:
 		return nil, 0, false, &Error{s, strings.ToLower(http.StatusText(s))}
 	}

@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io"
 	"os"
 	"strings"
@@ -32,7 +33,14 @@ const (
 )
 
 // ErrNeedInput indica que faltan datos y no hay terminal interactiva.
-var ErrNeedInput = errors.New("faltan datos de configuración y no hay terminal interactiva")
+var ErrNeedInput error = needInputError{}
+
+// needInputError es el centinela ErrNeedInput; su texto se resuelve al usarlo, con el idioma ya fijado.
+type needInputError struct{}
+
+func (needInputError) Error() string {
+	return i18n.Tr("faltan datos de configuración y no hay terminal interactiva", "configuration data is missing and there is no interactive terminal")
+}
 
 // ParseDotEnv lee líneas clave=valor. No expande variables ni ejecuta nada:
 // `$(cmd)`, `$VAR` y las comillas invertidas se conservan literalmente.
@@ -60,7 +68,7 @@ func ParseDotEnv(r io.Reader) (map[string]string, error) {
 		out[k] = v
 	}
 	if err := sc.Err(); err != nil {
-		return nil, fmt.Errorf("archivo de configuración ilegible o demasiado grande: %w", err)
+		return nil, fmt.Errorf(i18n.Tr("archivo de configuración ilegible o demasiado grande: %w", "configuration file unreadable or too large: %w"), err)
 	}
 	return out, nil
 }
@@ -78,7 +86,7 @@ func LoadFile(path string) (map[string]string, error) {
 		return nil, err
 	}
 	if !st.Mode().IsRegular() {
-		return nil, fmt.Errorf("%s no es un archivo regular", path)
+		return nil, fmt.Errorf(i18n.Tr("%s no es un archivo regular", "%s is not a regular file"), path)
 	}
 	return ParseDotEnv(f)
 }
@@ -89,7 +97,7 @@ func NormalizeFormat(s string) (string, error) {
 	case FormatHTML, FormatMD:
 		return v, nil
 	default:
-		return "", fmt.Errorf("formato %q inválido (opciones: html, md)", s)
+		return "", fmt.Errorf(i18n.Tr("formato %q inválido (opciones: html, md)", "invalid format %q (options: html, md)"), s)
 	}
 }
 
@@ -97,14 +105,14 @@ func NormalizeFormat(s string) (string, error) {
 // (evita inyección en cabeceras). Nunca incluye la clave en el error.
 func ValidateKey(k string) error {
 	if k == "" {
-		return errors.New("la API key está vacía")
+		return errors.New(i18n.Tr("la API key está vacía", "the API key is empty"))
 	}
 	if len(k) > maxKeyLen {
-		return errors.New("la API key es demasiado larga")
+		return errors.New(i18n.Tr("la API key es demasiado larga", "the API key is too long"))
 	}
 	for _, r := range k {
 		if r <= ' ' || r == 0x7f || r > 0x7e {
-			return errors.New("la API key contiene espacios o caracteres no válidos")
+			return errors.New(i18n.Tr("la API key contiene espacios o caracteres no válidos", "the API key contains spaces or invalid characters"))
 		}
 	}
 	return nil
@@ -153,13 +161,13 @@ func Resolve(o Options) (Settings, error) {
 		if v, ok := getenv(EnvFormat); ok && strings.TrimSpace(v) != "" {
 			f, err := NormalizeFormat(v)
 			if err != nil {
-				return s, fmt.Errorf("%s en el entorno: %w", EnvFormat, err)
+				return s, fmt.Errorf(i18n.Tr("%s en el entorno: %w", "%s in the environment: %w"), EnvFormat, err)
 			}
 			s.Format, s.FormatSource = f, "entorno"
 		} else if v := strings.TrimSpace(o.File[EnvFormat]); v != "" {
 			f, err := NormalizeFormat(v)
 			if err != nil {
-				return s, fmt.Errorf("%s en el archivo de configuración: %w", EnvFormat, err)
+				return s, fmt.Errorf(i18n.Tr("%s en el archivo de configuración: %w", "%s in the configuration file: %w"), EnvFormat, err)
 			}
 			s.Format, s.FormatSource = f, "archivo"
 		}
@@ -180,10 +188,10 @@ func Resolve(o Options) (Settings, error) {
 			falta = append(falta, EnvAPIKey)
 		}
 		if s.Format == "" {
-			falta = append(falta, EnvFormat+" (o --format)")
+			falta = append(falta, EnvFormat+i18n.Tr(" (o --format)", " (or --format)"))
 		}
-		return s, fmt.Errorf("%w: falta %s. Definilo como variable de entorno, en el archivo .env (--env-file) o ejecutá en una terminal interactiva",
-			ErrNeedInput, strings.Join(falta, " y "))
+		return s, fmt.Errorf(i18n.Tr("%w: falta %s. Definilo como variable de entorno, en el archivo .env (--env-file) o ejecutá en una terminal interactiva", "%w: %s missing. Define it as an environment variable, in the .env file (--env-file) or run in an interactive terminal"),
+			ErrNeedInput, strings.Join(falta, i18n.Tr(" y ", " and ")))
 	}
 
 	prompt := o.Prompt
@@ -194,16 +202,16 @@ func Resolve(o Options) (Settings, error) {
 		if o.ReadSecret == nil {
 			return s, ErrNeedInput
 		}
-		fmt.Fprint(prompt, "Ingresá tu API key de DayZeroHub: ")
+		fmt.Fprint(prompt, i18n.Tr("Ingresá tu API key de DayZeroHub: ", "Enter your DayZeroHub API key: "))
 		k, err := o.ReadSecret()
 		fmt.Fprintln(prompt)
 		if err != nil {
-			return s, fmt.Errorf("no se pudo leer la API key: %w", err)
+			return s, fmt.Errorf(i18n.Tr("no se pudo leer la API key: %w", "could not read the API key: %w"), err)
 		}
 		s.APIKey, s.KeySource = strings.TrimSpace(k), "terminal"
 	}
 	if err := ValidateKey(s.APIKey); err != nil {
-		return s, fmt.Errorf("%w (fuente: %s)", err, s.KeySource)
+		return s, fmt.Errorf(i18n.Tr("%w (fuente: %s)", "%w (source: %s)"), err, s.KeySource)
 	}
 
 	if s.Format == "" {
@@ -212,7 +220,7 @@ func Resolve(o Options) (Settings, error) {
 			in = bufio.NewReader(strings.NewReader(""))
 		}
 		for try := 0; try < 3; try++ {
-			fmt.Fprint(prompt, "¿En qué formato querés el informe?\n  1. HTML — recomendado\n  2. Markdown (.md)\nOpción [1]: ")
+			fmt.Fprint(prompt, i18n.Tr("¿En qué formato querés el informe?\n  1. HTML — recomendado\n  2. Markdown (.md)\nOpción [1]: ", "Which format do you want for the report?\n  1. HTML — recommended\n  2. Markdown (.md)\nOption [1]: "))
 			line, err := in.ReadString('\n')
 			ans := strings.ToLower(strings.TrimSpace(line))
 			if err != nil && ans == "" && try == 0 && !errors.Is(err, io.EOF) {
@@ -224,16 +232,16 @@ func Resolve(o Options) (Settings, error) {
 			case "2", "md", "markdown":
 				s.Format, s.FormatSource = FormatMD, "terminal"
 			default:
-				fmt.Fprintln(prompt, "Opción no válida.")
+				fmt.Fprintln(prompt, i18n.Tr("Opción no válida.", "Invalid option."))
 				if errors.Is(err, io.EOF) {
-					return s, fmt.Errorf("%w: no se pudo elegir el formato", ErrNeedInput)
+					return s, fmt.Errorf(i18n.Tr("%w: no se pudo elegir el formato", "%w: could not choose the format"), ErrNeedInput)
 				}
 				continue
 			}
 			break
 		}
 		if s.Format == "" {
-			return s, errors.New("formato no elegido tras 3 intentos")
+			return s, errors.New(i18n.Tr("formato no elegido tras 3 intentos", "no format chosen after 3 attempts"))
 		}
 	}
 	return s, nil

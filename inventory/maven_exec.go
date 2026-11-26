@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -163,11 +164,11 @@ func (m *mvn) effective(ctx context.Context) {
 	if runner == nil {
 		path, err := exec.LookPath(bin)
 		if err != nil {
-			m.toolGap(roots[0].rel, fmt.Sprintf("no se encontró el ejecutable %q: %v", bin, err))
+			m.toolGap(roots[0].rel, fmt.Sprintf(i18n.Tr("no se encontró el ejecutable %q: %v", "executable %q not found: %v"), bin, err))
 			return
 		}
 		if abs, err := filepath.Abs(path); err == nil && m.inRootPath(abs) {
-			m.toolGap(roots[0].rel, "se rechaza ejecutar un binario ubicado dentro del repositorio auditado: "+abs)
+			m.toolGap(roots[0].rel, i18n.Tr("se rechaza ejecutar un binario ubicado dentro del repositorio auditado: ", "refusing to run a binary located inside the audited repository: ")+abs)
 			return
 		}
 		bin, runner = path, execRunner{}
@@ -189,28 +190,28 @@ func (m *mvn) effective(ctx context.Context) {
 		mods, unparsed := parseTree(out)
 		switch {
 		case timedOut:
-			m.toolGap(root.rel, fmt.Sprintf("Maven superó el tiempo máximo (%s); se conserva el resultado estático", timeout))
+			m.toolGap(root.rel, fmt.Sprintf(i18n.Tr("Maven superó el tiempo máximo (%s); se conserva el resultado estático", "Maven exceeded the maximum time (%s); the static result is kept"), timeout))
 		case ctx.Err() != nil:
-			m.toolGap(root.rel, "ejecución de Maven cancelada")
+			m.toolGap(root.rel, i18n.Tr("ejecución de Maven cancelada", "Maven execution cancelled"))
 			return
 		case err != nil && len(mods) == 0:
-			m.toolGap(root.rel, "Maven terminó con error: "+cleanText(err.Error(), 120)+tail(out))
+			m.toolGap(root.rel, i18n.Tr("Maven terminó con error: ", "Maven finished with an error: ")+cleanText(err.Error(), 120)+tail(out))
 		case len(mods) == 0:
-			m.toolGap(root.rel, "la salida de Maven no contiene árboles de dependencias interpretables")
+			m.toolGap(root.rel, i18n.Tr("la salida de Maven no contiene árboles de dependencias interpretables", "Maven output contains no interpretable dependency trees"))
 		}
 		if timedOut || len(mods) == 0 {
 			continue
 		}
 		if err != nil {
-			m.toolGap(root.rel, "Maven terminó con error pero imprimió árboles parciales; los módulos sin árbol conservan el resultado estático:"+tail(out))
+			m.toolGap(root.rel, i18n.Tr("Maven terminó con error pero imprimió árboles parciales; los módulos sin árbol conservan el resultado estático:", "Maven finished with an error but printed partial trees; modules without a tree keep the static result:")+tail(out))
 		}
 		if unparsed > 0 {
-			m.toolGap(root.rel, fmt.Sprintf("%d líneas del árbol de Maven no se pudieron interpretar", unparsed))
+			m.toolGap(root.rel, fmt.Sprintf(i18n.Tr("%d líneas del árbol de Maven no se pudieron interpretar", "%d lines of the Maven tree could not be parsed"), unparsed))
 		}
 		for _, mt := range mods {
 			p := m.moduleFor(mt)
 			if p == nil {
-				m.stats.Notes = append(m.stats.Notes, fmt.Sprintf("Maven reportó el módulo %q que no coincide con ningún pom.xml leído; se ignoró", mt.Heading))
+				m.stats.Notes = append(m.stats.Notes, fmt.Sprintf(i18n.Tr("Maven reportó el módulo %q que no coincide con ningún pom.xml leído; se ignoró", "Maven reported module %q which matches no pom.xml read; it was ignored"), mt.Heading))
 				continue
 			}
 			comps += m.applyTree(p, mt)
@@ -219,10 +220,10 @@ func (m *mvn) effective(ctx context.Context) {
 	}
 	if applied > 0 {
 		m.stats.Effective = true
-		m.stats.EffectiveNote = fmt.Sprintf("árbol efectivo de Maven (dependency:tree) aplicado a %d módulos, %d componentes", applied, comps)
-		m.stats.Notes = append(m.stats.Notes, "modo efectivo: el árbol sale de Maven; el resultado depende del entorno (repositorios, perfiles, plugins)")
+		m.stats.EffectiveNote = fmt.Sprintf(i18n.Tr("árbol efectivo de Maven (dependency:tree) aplicado a %d módulos, %d componentes", "effective Maven tree (dependency:tree) applied to %d modules, %d components"), applied, comps)
+		m.stats.Notes = append(m.stats.Notes, i18n.Tr("modo efectivo: el árbol sale de Maven; el resultado depende del entorno (repositorios, perfiles, plugins)", "effective mode: the tree comes from Maven; the result depends on the environment (repositories, profiles, plugins)"))
 	} else {
-		m.stats.EffectiveNote = "modo efectivo solicitado pero sin resultados; ver cobertura"
+		m.stats.EffectiveNote = i18n.Tr("modo efectivo solicitado pero sin resultados; ver cobertura", "effective mode requested but no results; see coverage")
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io"
 	"net"
 	"net/http"
@@ -380,7 +381,7 @@ func ParseResolve(items []string) (map[string]string, error) {
 	for _, it := range items {
 		parts := strings.SplitN(it, ":", 3)
 		if len(parts) != 3 {
-			return nil, fmt.Errorf("--resolve %q: formato esperado host:puerto:ip", it)
+			return nil, fmt.Errorf(i18n.Tr("--resolve %q: formato esperado host:puerto:ip", "--resolve %q: expected format host:port:ip"), it)
 		}
 		host, err := targets.NormalizeHost(parts[0])
 		if err != nil {
@@ -388,11 +389,11 @@ func ParseResolve(items []string) (map[string]string, error) {
 		}
 		p, err := strconv.Atoi(parts[1])
 		if err != nil || p < 1 || p > 65535 {
-			return nil, fmt.Errorf("--resolve %q: puerto inválido", it)
+			return nil, fmt.Errorf(i18n.Tr("--resolve %q: puerto inválido", "--resolve %q: invalid port"), it)
 		}
 		ip, err := netip.ParseAddr(strings.Trim(parts[2], "[]"))
 		if err != nil {
-			return nil, fmt.Errorf("--resolve %q: IP inválida", it)
+			return nil, fmt.Errorf(i18n.Tr("--resolve %q: IP inválida", "--resolve %q: invalid IP"), it)
 		}
 		m[net.JoinHostPort(host, strconv.Itoa(p))] = ip.Unmap().String()
 	}

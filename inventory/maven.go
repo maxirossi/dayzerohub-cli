@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io"
 	"os"
 	"path/filepath"
@@ -207,7 +208,7 @@ func (a *analyzer) runMaven(ctx context.Context, opt MavenOptions) {
 		return
 	}
 	m.stats.Notes = append(m.stats.Notes,
-		"modo estático: se leyeron los pom.xml sin ejecutar Maven; solo las dependencias directas tienen versión; las transitivas quedan pendientes")
+		i18n.Tr("modo estático: se leyeron los pom.xml sin ejecutar Maven; solo las dependencias directas tienen versión; las transitivas quedan pendientes", "static mode: pom.xml files were read without running Maven; only direct dependencies have a version; transitive ones remain pending"))
 	if opt.Resolve {
 		m.effective(ctx)
 	}
@@ -243,7 +244,7 @@ func (m *mvn) load(abs, rel string, report bool) *mpom {
 	b, err := readLimited(abs, maxManifest)
 	if err != nil {
 		if report {
-			m.gap(rel, CauseParseError, "no se pudo leer el pom.xml: "+err.Error())
+			m.gap(rel, CauseParseError, i18n.Tr("no se pudo leer el pom.xml: ", "could not read pom.xml: ")+err.Error())
 		}
 		return nil
 	}
@@ -252,7 +253,7 @@ func (m *mvn) load(abs, rel string, report bool) *mpom {
 	dec.CharsetReader = func(_ string, in io.Reader) (io.Reader, error) { return in, nil }
 	if err := dec.Decode(&p.x); err != nil {
 		if report {
-			m.gap(rel, CauseParseError, "pom.xml inválido: "+cleanText(err.Error(), 160))
+			m.gap(rel, CauseParseError, i18n.Tr("pom.xml inválido: ", "invalid pom.xml: ")+cleanText(err.Error(), 160))
 		}
 		return nil
 	}
@@ -348,7 +349,7 @@ func (m *mvn) parentOf(p *mpom) *mpom {
 		return c
 	}
 	if p.inRoot {
-		m.gap(p.rel, CauseMavenParent, fmt.Sprintf("parent POM %s:%s:%s no disponible (ni en la ruta relativa ni en el repositorio local); propiedades y versiones heredadas quedan sin resolver", g, a, v))
+		m.gap(p.rel, CauseMavenParent, fmt.Sprintf(i18n.Tr("parent POM %s:%s:%s no disponible (ni en la ruta relativa ni en el repositorio local); propiedades y versiones heredadas quedan sin resolver", "parent POM %s:%s:%s not available (neither in the relative path nor in the local repository); inherited properties and versions remain unresolved"), g, a, v))
 	}
 	return nil
 }
@@ -421,12 +422,12 @@ func (m *mvn) interp(leaf *mpom, s string) (out, problem string) {
 		}
 		v, ok := m.lookup(leaf, loc[1])
 		if !ok {
-			return s, "propiedad no definida: " + loc[1]
+			return s, i18n.Tr("propiedad no definida: ", "undefined property: ") + loc[1]
 		}
 		s = strings.ReplaceAll(s, loc[0], v)
 	}
 	if placeholderRe.MatchString(s) {
-		return s, "propiedades cíclicas o demasiado anidadas"
+		return s, i18n.Tr("propiedades cíclicas o demasiado anidadas", "cyclic or too deeply nested properties")
 	}
 	return s, ""
 }
@@ -485,11 +486,11 @@ func (m *mvn) managed(p, leaf *mpom, depth int, report *mpom) map[string]mvnMana
 			}
 			if bom == nil {
 				if report != nil && report.inRoot {
-					why := "no disponible"
+					why := i18n.Tr("no disponible", "not available")
 					if prob != "" {
 						why = prob
 					}
-					m.gap(report.rel, CauseMavenParent, fmt.Sprintf("BOM %s:%s:%s %s; las versiones que aporta quedan sin resolver", g, a, v, why))
+					m.gap(report.rel, CauseMavenParent, fmt.Sprintf(i18n.Tr("BOM %s:%s:%s %s; las versiones que aporta quedan sin resolver", "BOM %s:%s:%s %s; the versions it provides remain unresolved"), g, a, v, why))
 				}
 				continue
 			}
@@ -582,7 +583,7 @@ func (m *mvn) emit(p *mpom) {
 		for i, id := range p.inactive {
 			ids[i] = cleanText(id, 40)
 		}
-		m.gap(p.rel, CauseMavenProfiles, fmt.Sprintf("%d perfiles no evaluados (sus dependencias y propiedades no se incluyen): %s", len(ids), strings.Join(ids, ", ")))
+		m.gap(p.rel, CauseMavenProfiles, fmt.Sprintf(i18n.Tr("%d perfiles no evaluados (sus dependencias y propiedades no se incluyen): %s", "%d profiles not evaluated (their dependencies and properties are not included): %s"), len(ids), strings.Join(ids, ", ")))
 	}
 	managed := m.managed(p, p, 0, p)
 	deps := m.effectiveDeps(p)
@@ -606,9 +607,9 @@ func (m *mvn) emit(p *mpom) {
 			case hasMg && mg.Problem == "" && mg.Version != "":
 				ver = mg.Version
 			case hasMg && mg.Problem != "":
-				prob = mg.Problem + " (en dependencyManagement)"
+				prob = mg.Problem + i18n.Tr(" (en dependencyManagement)", " (in dependencyManagement)")
 			default:
-				prob = "sin versión y sin entrada en dependencyManagement"
+				prob = i18n.Tr("sin versión y sin entrada en dependencyManagement", "no version and no entry in dependencyManagement")
 			}
 		}
 		c := Component{Name: g + ":" + art, Ecosystem: EcoMaven, Kind: KindLibrary, Relation: RelDirect,
@@ -618,7 +619,7 @@ func (m *mvn) emit(p *mpom) {
 			c.Notes = append(c.Notes, "type: "+t)
 		}
 		if strings.EqualFold(strings.TrimSpace(d.Optional), "true") {
-			c.Notes = append(c.Notes, "opcional")
+			c.Notes = append(c.Notes, i18n.Tr("opcional", "optional"))
 		}
 		switch {
 		case prob != "":
@@ -627,11 +628,11 @@ func (m *mvn) emit(p *mpom) {
 				c.Constraint, c.State = cleanText(ver, 80), StateConstraint
 			}
 			m.stats.Pending++
-			m.gap(p.rel, CauseMavenPending, fmt.Sprintf("%s: versión no resuelta (%s)", c.Name, prob))
+			m.gap(p.rel, CauseMavenPending, fmt.Sprintf(i18n.Tr("%s: versión no resuelta (%s)", "%s: unresolved version (%s)"), c.Name, prob))
 		case isRange(ver):
 			c.Constraint, c.State, c.Resolution = cleanText(ver, 80), StateConstraint, ResDeclared
 			m.stats.Pending++
-			m.gap(p.rel, CauseMavenPending, fmt.Sprintf("%s: rango de versiones %s sin resolver", c.Name, cleanText(ver, 60)))
+			m.gap(p.rel, CauseMavenPending, fmt.Sprintf(i18n.Tr("%s: rango de versiones %s sin resolver", "%s: version range %s unresolved"), c.Name, cleanText(ver, 60)))
 		default:
 			c.Version, c.State, c.Resolution = cleanText(ver, 80), StateExact, ResMavenStat
 			m.stats.Resolved++
@@ -639,7 +640,7 @@ func (m *mvn) emit(p *mpom) {
 		a.add(c)
 	}
 	if len(deps) > 0 {
-		m.gap(p.rel, CauseMavenPending, "dependencias transitivas no resueltas sin Maven efectivo (modo estático)")
+		m.gap(p.rel, CauseMavenPending, i18n.Tr("dependencias transitivas no resueltas sin Maven efectivo (modo estático)", "transitive dependencies unresolved without effective Maven (static mode)"))
 	}
 }
 
@@ -666,12 +667,12 @@ func (m *mvn) checkModules() {
 			switch {
 			case found[t]:
 			case !m.inRootPath(t):
-				m.gap(p.rel, CauseMavenPending, fmt.Sprintf("módulo %q fuera de la ruta analizada: no se leyó", mod))
+				m.gap(p.rel, CauseMavenPending, fmt.Sprintf(i18n.Tr("módulo %q fuera de la ruta analizada: no se leyó", "module %q outside the analyzed path: not read"), mod))
 			default:
 				if _, err := os.Stat(t); err != nil {
-					m.gap(p.rel, CauseMavenPending, fmt.Sprintf("módulo %q declarado pero su pom.xml no existe", mod))
+					m.gap(p.rel, CauseMavenPending, fmt.Sprintf(i18n.Tr("módulo %q declarado pero su pom.xml no existe", "module %q declared but its pom.xml does not exist"), mod))
 				} else {
-					m.gap(p.rel, CauseMavenPending, fmt.Sprintf("módulo %q excluido del recorrido por una regla de exclusión: no se analizó", mod))
+					m.gap(p.rel, CauseMavenPending, fmt.Sprintf(i18n.Tr("módulo %q excluido del recorrido por una regla de exclusión: no se analizó", "module %q excluded from the walk by an exclusion rule: not analyzed"), mod))
 				}
 			}
 		}

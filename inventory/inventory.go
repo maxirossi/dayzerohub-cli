@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io"
 	"io/fs"
 	"os"
@@ -195,14 +196,14 @@ func AnalyzeWith(ctx context.Context, root string, opts Options) (*Result, error
 	}
 	real, err := filepath.EvalSymlinks(abs)
 	if err != nil {
-		return nil, fmt.Errorf("no se puede acceder a %s: %w", root, err)
+		return nil, fmt.Errorf(i18n.Tr("no se puede acceder a %s: %w", "cannot access %s: %w"), root, err)
 	}
 	st, err := os.Stat(real)
 	if err != nil {
 		return nil, err
 	}
 	if !st.IsDir() {
-		return nil, fmt.Errorf("%s no es un directorio", root)
+		return nil, fmt.Errorf(i18n.Tr("%s no es un directorio", "%s is not a directory"), root)
 	}
 	a := &analyzer{
 		root: real, res: &Result{Root: abs, Name: filepath.Base(abs)},
@@ -243,9 +244,9 @@ func (a *analyzer) walk(ctx context.Context) error {
 		if interesting[name] {
 			a.addFile(dir, name)
 		} else if why, ok := unsupportedFiles[name]; ok {
-			a.res.Unsupported = append(a.res.Unsupported, Unsupported{e.Rel, "ecosistema no soportado todavía: " + why, CauseEcosystem})
+			a.res.Unsupported = append(a.res.Unsupported, Unsupported{e.Rel, i18n.Tr("ecosistema no soportado todavía: ", "ecosystem not supported yet: ") + why, CauseEcosystem})
 		} else if strings.HasSuffix(name, ".csproj") || strings.HasSuffix(name, ".sln") {
-			a.res.Unsupported = append(a.res.Unsupported, Unsupported{e.Rel, "ecosistema no soportado todavía: .NET", CauseEcosystem})
+			a.res.Unsupported = append(a.res.Unsupported, Unsupported{e.Rel, i18n.Tr("ecosistema no soportado todavía: .NET", "ecosystem not supported yet: .NET"), CauseEcosystem})
 		}
 		return nil
 	})
@@ -256,7 +257,7 @@ func (a *analyzer) walk(ctx context.Context) error {
 	a.res.Errors = append(a.res.Errors, rep.Errors...)
 	a.symlnk = rep.Symlinks
 	if rep.Truncated {
-		a.res.Limitations = append(a.res.Limitations, fmt.Sprintf("el recorrido se detuvo tras %d entradas", maxEntries))
+		a.res.Limitations = append(a.res.Limitations, fmt.Sprintf(i18n.Tr("el recorrido se detuvo tras %d entradas", "the walk stopped after %d entries"), maxEntries))
 	}
 	if rep.DepthSkipped > 0 {
 		a.skipped["profundidad"] = true
@@ -302,10 +303,10 @@ func readLimited(path string, max int64) ([]byte, error) {
 		return nil, err
 	}
 	if !st.Mode().IsRegular() {
-		return nil, errors.New("no es un archivo regular")
+		return nil, errors.New(i18n.Tr("no es un archivo regular", "not a regular file"))
 	}
 	if st.Size() > max {
-		return nil, fmt.Errorf("archivo demasiado grande (%d bytes, máximo %d)", st.Size(), max)
+		return nil, fmt.Errorf(i18n.Tr("archivo demasiado grande (%d bytes, máximo %d)", "file too large (%d bytes, maximum %d)"), st.Size(), max)
 	}
 	return io.ReadAll(io.LimitReader(f, max))
 }
@@ -372,15 +373,15 @@ func (a *analyzer) finish() {
 	for k := range a.skipped {
 		switch k {
 		case "profundidad":
-			r.Limitations = append(r.Limitations, fmt.Sprintf("se omitieron directorios a más de %d niveles de profundidad", maxDepth))
+			r.Limitations = append(r.Limitations, fmt.Sprintf(i18n.Tr("se omitieron directorios a más de %d niveles de profundidad", "directories deeper than %d levels were skipped"), maxDepth))
 		}
 	}
 	if a.symlnk > 0 {
-		r.Limitations = append(r.Limitations, fmt.Sprintf("%d enlaces simbólicos no se siguieron (fuera de la raíz, ciclos o --follow-symlinks desactivado)", a.symlnk))
+		r.Limitations = append(r.Limitations, fmt.Sprintf(i18n.Tr("%d enlaces simbólicos no se siguieron (fuera de la raíz, ciclos o --follow-symlinks desactivado)", "%d symbolic links were not followed (outside the root, cycles or --follow-symlinks disabled)"), a.symlnk))
 	}
 	sort.Strings(r.Limitations)
 	if len(r.Subprojects) == 0 {
-		r.Limitations = append(r.Limitations, "no se encontraron manifiestos soportados (package.json, composer.json, go.mod, WordPress)")
+		r.Limitations = append(r.Limitations, i18n.Tr("no se encontraron manifiestos soportados (package.json, composer.json, go.mod, WordPress)", "no supported manifests found (package.json, composer.json, go.mod, WordPress)"))
 	}
 	for i := range r.Components {
 		c := &r.Components[i]

@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"github.com/maxirossi/mateprobe/i18n"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -106,17 +107,17 @@ func (s *wpSite) readPlugins(a *analyzer, pluginsDir string) {
 			}
 			c := Component{Name: name, Ecosystem: EcoWP, Kind: KindPlugin, State: StateUnknown, Relation: RelDirect,
 				Evidence: a.rel(pf), Aliases: []string{strings.ToLower(slug)},
-				Notes: []string{"plugin presente en disco; no se determinó si está activo"}}
+				Notes: []string{i18n.Tr("plugin presente en disco; no se determinó si está activo", "plugin present on disk; it was not determined whether it is active")}}
 			if v := wpHeader(head, "Version"); wpVersionOK.MatchString(v) {
 				c.Version, c.State = v, StateExact
 			} else if v != "" {
-				c.Notes = append(c.Notes, "el encabezado Version no es interpretable")
+				c.Notes = append(c.Notes, i18n.Tr("el encabezado Version no es interpretable", "the Version header cannot be parsed"))
 			}
 			if td := wpHeader(head, "Text Domain"); td != "" {
 				c.Aliases = append(c.Aliases, strings.ToLower(td))
 			}
 			if au := wpHeader(head, "Author"); au != "" {
-				c.Notes = append(c.Notes, "autor: "+au)
+				c.Notes = append(c.Notes, i18n.Tr("autor: ", "author: ")+au)
 			}
 			s.plugins = append(s.plugins, c)
 			break // el archivo principal es el primero con encabezado
@@ -158,7 +159,7 @@ func (a *analyzer) processWP() {
 			files = append(files, core.Evidence)
 		} else {
 			core.Evidence = join(d, "wp-content/plugins")
-			core.Notes = []string{"no se encontró wp-includes/version.php; versión del core desconocida"}
+			core.Notes = []string{i18n.Tr("no se encontró wp-includes/version.php; versión del core desconocida", "wp-includes/version.php not found; core version unknown")}
 		}
 		a.add(core)
 		for _, p := range s.plugins {
@@ -167,7 +168,7 @@ func (a *analyzer) processWP() {
 			files = append(files, p.Evidence)
 		}
 		sp := Subproject{Path: d, Name: "WordPress", Ecosystems: []string{EcoWP}, Files: files}
-		sp.Notes = append(sp.Notes, "no se analizaron temas ni mu-plugins; no se ejecutó PHP")
+		sp.Notes = append(sp.Notes, i18n.Tr("no se analizaron temas ni mu-plugins; no se ejecutó PHP", "themes and mu-plugins were not analyzed; PHP was not run"))
 		// Si ya existe un subproyecto en ese directorio, se fusiona.
 		merged := false
 		for i := range a.res.Subprojects {

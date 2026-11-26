@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"strings"
 )
 
@@ -129,14 +130,14 @@ func (a *analyzer) processGo(dir string, f map[string]bool, sp *Subproject) {
 		if m.GoVersion != "" {
 			c := Component{Name: "Go", Ecosystem: EcoGo, Kind: KindLanguage, Constraint: m.GoVersion, State: StateConstraint,
 				Relation: RelDirect, Evidence: file, Subproject: dir, Aliases: []string{"go", "golang"},
-				Notes: []string{"directiva `go` de " + name + " (versión mínima del lenguaje, no necesariamente la del toolchain instalado)"}}
+				Notes: []string{i18n.Tr("directiva `go` de ", "`go` directive of ") + name + i18n.Tr(" (versión mínima del lenguaje, no necesariamente la del toolchain instalado)", " (minimum language version, not necessarily that of the installed toolchain)")}}
 			if m.Toolchain != "" {
 				c.Notes = append(c.Notes, "toolchain: "+m.Toolchain)
 			}
 			a.add(c)
 		}
 		if len(m.Uses) > 0 {
-			sp.Notes = append(sp.Notes, "go.work usa: "+strings.Join(m.Uses, ", "))
+			sp.Notes = append(sp.Notes, i18n.Tr("go.work usa: ", "go.work uses: ")+strings.Join(m.Uses, ", "))
 		}
 		repl := map[string][]goRepl{}
 		for _, r := range m.Replaces {
@@ -149,7 +150,7 @@ func (a *analyzer) processGo(dir string, f map[string]bool, sp *Subproject) {
 			}
 			c := Component{Name: r.Path, Ecosystem: EcoGo, Kind: KindLibrary, Constraint: r.Version, State: StateConstraint,
 				Relation: rel, Evidence: file, Subproject: dir,
-				Notes: []string{"versión declarada en go.mod (mínima para MVS); el grafo resuelto no se determina sin ejecutar herramientas de Go"}}
+				Notes: []string{i18n.Tr("versión declarada en go.mod (mínima para MVS); el grafo resuelto no se determina sin ejecutar herramientas de Go", "version declared in go.mod (minimum for MVS); the resolved graph is not determined without running Go tooling")}}
 			if disp, ok := goFrameworks[r.Path]; ok {
 				c.Kind = KindFramework
 				c.Aliases = append(c.Aliases, strings.ToLower(disp))
@@ -158,22 +159,22 @@ func (a *analyzer) processGo(dir string, f map[string]bool, sp *Subproject) {
 				if rp.OldVer != "" && rp.OldVer != r.Version {
 					continue
 				}
-				c.Notes = append(c.Notes, fmt.Sprintf("reemplazado por %s %s", rp.New, rp.NewVer))
+				c.Notes = append(c.Notes, fmt.Sprintf(i18n.Tr("reemplazado por %s %s", "replaced by %s %s"), rp.New, rp.NewVer))
 			}
 			a.add(c)
 		}
 		for _, r := range m.Replaces {
 			if isLocalPath(r.New) {
-				sp.Notes = append(sp.Notes, fmt.Sprintf("replace local: %s => %s", r.Old, r.New))
+				sp.Notes = append(sp.Notes, fmt.Sprintf(i18n.Tr("replace local: %s => %s", "local replace: %s => %s"), r.Old, r.New))
 				continue
 			}
 			a.add(Component{Name: r.New, Ecosystem: EcoGo, Kind: KindLibrary, Constraint: r.NewVer, State: StateConstraint,
 				Relation: RelUnknown, Evidence: file, Subproject: dir,
-				Notes: []string{fmt.Sprintf("módulo de reemplazo de %s en %s", r.Old, name)}})
+				Notes: []string{fmt.Sprintf(i18n.Tr("módulo de reemplazo de %s en %s", "replacement module for %s in %s"), r.Old, name)}})
 		}
 	}
 	if sp.Ecosystems != nil {
-		a.res.Limitations = append(a.res.Limitations, "Go: go.sum no se usa como lista de dependencias y el grafo resuelto no puede determinarse sin ejecutar herramientas de Go")
+		a.res.Limitations = append(a.res.Limitations, i18n.Tr("Go: go.sum no se usa como lista de dependencias y el grafo resuelto no puede determinarse sin ejecutar herramientas de Go", "Go: go.sum is not used as a dependency list and the resolved graph cannot be determined without running Go tooling"))
 		a.res.Limitations = dedupe(a.res.Limitations)
 	}
 }

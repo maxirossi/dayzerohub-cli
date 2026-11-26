@@ -9,6 +9,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/maxirossi/mateprobe/i18n"
 	"github.com/maxirossi/mateprobe/model"
 	"github.com/maxirossi/mateprobe/redact"
 )
@@ -28,7 +29,7 @@ func Write(w io.Writer, format string, r *model.Report) error {
 	case "html":
 		return HTML(w, r)
 	}
-	return fmt.Errorf("formato desconocido %q (opciones: %s)", format, strings.Join(Formats, ", "))
+	return fmt.Errorf(i18n.Tr("formato desconocido %q (opciones: %s)", "unknown format %q (options: %s)"), format, strings.Join(Formats, ", "))
 }
 
 // JSON escribe el reporte con sangría.
@@ -43,7 +44,7 @@ func Table(w io.Writer, r *model.Report) error {
 	for _, t := range r.Targets {
 		fmt.Fprintf(w, "\n%s  [%s]\n", t.Target, statusLabel(t.Status))
 		if t.Input != t.Target {
-			fmt.Fprintf(w, "  origen: %s\n", t.Input)
+			fmt.Fprintf(w, i18n.Tr("  origen: %s\n", "  source: %s\n"), t.Input)
 		}
 		for _, resp := range t.Responses {
 			title := ""
@@ -52,16 +53,16 @@ func Table(w io.Writer, r *model.Report) error {
 			}
 			fmt.Fprintf(w, "  HTTP %d  %s  (%d ms)%s\n", resp.Status, resp.RequestedURL, resp.DurationMS, title)
 			if resp.Redirect != nil {
-				fmt.Fprintf(w, "      redirección %d → %s  (%s)\n", resp.Redirect.Status, resp.Redirect.Location, redirectLabel(resp.Redirect))
+				fmt.Fprintf(w, i18n.Tr("      redirección %d → %s  (%s)\n", "      redirect %d → %s  (%s)\n"), resp.Redirect.Status, resp.Redirect.Location, redirectLabel(resp.Redirect))
 			}
 		}
 		if len(t.Technologies) > 0 {
 			tw := tabwriter.NewWriter(w, 2, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "  TECNOLOGÍA\tCATEGORÍA\tVERSIÓN\tDETECCIÓN\tCONFIANZA\tMOTOR\tURL")
+			fmt.Fprintln(tw, i18n.Tr("  TECNOLOGÍA\tCATEGORÍA\tVERSIÓN\tDETECCIÓN\tCONFIANZA\tMOTOR\tURL", "  TECHNOLOGY\tCATEGORY\tVERSION\tDETECTION\tCONFIDENCE\tENGINE\tURL"))
 			for _, x := range t.Technologies {
 				name := x.Name
 				if x.External {
-					name += " (externo)"
+					name += i18n.Tr(" (externo)", " (external)")
 				}
 				fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, x.Category, dash(x.Version),
 					detectionLabel(x.Detection), confidenceLabel(x.Confidence), x.Engine, x.URL)
@@ -69,17 +70,17 @@ func Table(w io.Writer, r *model.Report) error {
 			tw.Flush()
 		}
 		for _, e := range t.Errors {
-			fmt.Fprintf(w, "  error [%s] %s: %s\n", e.Class, e.URL, e.Message)
+			fmt.Fprintf(w, i18n.Tr("  error [%s] %s: %s\n", "  error [%s] %s: %s\n"), e.Class, e.URL, e.Message)
 		}
 	}
 	s := r.Summary
-	fmt.Fprintf(w, "\nResumen: %d objetivos · %d con tecnologías · %d sin tecnologías detectadas · %d sin respuesta · %d incompletos · %d tecnologías\n",
+	fmt.Fprintf(w, i18n.Tr("\nResumen: %d objetivos · %d con tecnologías · %d sin tecnologías detectadas · %d sin respuesta · %d incompletos · %d tecnologías\n", "\nSummary: %d targets · %d with technologies · %d with no technologies detected · %d unreachable · %d incomplete · %d technologies\n"),
 		s.Targets, s.Detected, s.NoTechnologies, s.Unreachable, s.Incomplete, s.Technologies)
 	if r.Settings.TLSValidationDisabled {
-		fmt.Fprintln(w, "AVISO: se ejecutó con --insecure; los certificados TLS NO fueron validados.")
+		fmt.Fprintln(w, i18n.Tr("AVISO: se ejecutó con --insecure; los certificados TLS NO fueron validados.", "WARNING: run with --insecure; TLS certificates were NOT validated."))
 	}
 	if r.Interrupted {
-		fmt.Fprintf(w, "AVISO: ejecución interrumpida; %d objetivos no se procesaron.\n", r.NotStarted)
+		fmt.Fprintf(w, i18n.Tr("AVISO: ejecución interrumpida; %d objetivos no se procesaron.\n", "WARNING: run interrupted; %d targets were not processed.\n"), r.NotStarted)
 	}
 	return nil
 }
@@ -110,7 +111,7 @@ func CSV(w io.Writer, r *model.Report) error {
 			}
 			ev := strings.Join(evs, " | ")
 			if ev == "" {
-				ev = "(evidencia no disponible)"
+				ev = i18n.Tr("(evidencia no disponible)", "(evidence not available)")
 			}
 			_ = cw.Write(safeRow([]string{model.SchemaVersion, t.Input, t.Target, t.Status, x.URL, x.Host,
 				fmt.Sprint(x.External), x.Name, x.Category, x.Version, x.Detection, x.Confidence, x.Engine, ev}))
@@ -142,13 +143,13 @@ func dash(s string) string {
 func statusLabel(s string) string {
 	switch s {
 	case model.StatusDetected:
-		return "tecnologías detectadas"
+		return i18n.Tr("tecnologías detectadas", "technologies detected")
 	case model.StatusNoTechnologies:
-		return "respondió, sin tecnologías detectadas"
+		return i18n.Tr("respondió, sin tecnologías detectadas", "responded, no technologies detected")
 	case model.StatusUnreachable:
-		return "no se pudo consultar"
+		return i18n.Tr("no se pudo consultar", "could not be queried")
 	case model.StatusIncomplete:
-		return "incompleto (interrumpido)"
+		return i18n.Tr("incompleto (interrumpido)", "incomplete (interrupted)")
 	}
 	return s
 }
@@ -156,11 +157,11 @@ func statusLabel(s string) string {
 func detectionLabel(s string) string {
 	switch s {
 	case model.DetectionDeclared:
-		return "declarada"
+		return i18n.Tr("declarada", "declared")
 	case model.DetectionSignature:
-		return "firma"
+		return i18n.Tr("firma", "signature")
 	case model.DetectionInferred:
-		return "inferida"
+		return i18n.Tr("inferida", "inferred")
 	}
 	return s
 }
@@ -168,18 +169,18 @@ func detectionLabel(s string) string {
 func confidenceLabel(s string) string {
 	switch s {
 	case model.ConfidenceHigh:
-		return "alta"
+		return i18n.Tr("alta", "high")
 	case model.ConfidenceMedium:
-		return "media"
+		return i18n.Tr("media", "medium")
 	case model.ConfidenceLow:
-		return "baja"
+		return i18n.Tr("baja", "low")
 	}
-	return "desconocida"
+	return i18n.Tr("desconocida", "unknown")
 }
 
 func redirectLabel(r *model.Redirect) string {
 	if r.Followed {
-		return "seguida: " + r.Reason
+		return i18n.Tr("seguida: ", "followed: ") + r.Reason
 	}
-	return "NO seguida: " + r.Reason
+	return i18n.Tr("NO seguida: ", "NOT followed: ") + r.Reason
 }

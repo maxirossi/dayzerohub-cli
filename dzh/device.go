@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"io"
 	"net/http"
 	"net/url"
@@ -19,10 +20,23 @@ const (
 )
 
 // ErrPending indica que el usuario todavía no aprobó el código.
-var ErrPending = errors.New("autorización pendiente")
+var ErrPending error = pendingError{}
 
 // ErrExpired indica que el código venció o ya fue canjeado.
-var ErrExpired = errors.New("el código venció; ejecutá `mateprobe login` de nuevo")
+var ErrExpired error = expiredError{}
+
+// pendingError y expiredError son los centinelas ErrPending/ErrExpired; su texto se resuelve al usarlos, con el idioma ya fijado.
+type pendingError struct{}
+
+func (pendingError) Error() string {
+	return i18n.Tr("autorización pendiente", "authorization pending")
+}
+
+type expiredError struct{}
+
+func (expiredError) Error() string {
+	return i18n.Tr("el código venció; ejecutá `mateprobe login` de nuevo", "the code expired; run `mateprobe login` again")
+}
 
 // Device es la respuesta de StartDevice.
 type Device struct {
@@ -36,7 +50,7 @@ type Device struct {
 func (c *Client) postJSON(ctx context.Context, path string, in, out any) (int, error) {
 	base, err := url.Parse(c.BaseURL)
 	if err != nil || base.Host == "" {
-		return 0, errors.New("URL base inválida")
+		return 0, errors.New(i18n.Tr("URL base inválida", "invalid base URL"))
 	}
 	body, _ := json.Marshal(in)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base.JoinPath(path).String(), bytes.NewReader(body))
@@ -50,13 +64,13 @@ func (c *Client) postJSON(ctx context.Context, path string, in, out any) (int, e
 	}
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("error de red: %w", err)
+		return 0, fmt.Errorf(i18n.Tr("error de red: %w", "network error: %w"), err)
 	}
 	defer resp.Body.Close()
 	data, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if resp.StatusCode/100 == 2 && out != nil {
 		if err := json.Unmarshal(data, out); err != nil {
-			return resp.StatusCode, fmt.Errorf("JSON inválido en la respuesta: %w", err)
+			return resp.StatusCode, fmt.Errorf(i18n.Tr("JSON inválido en la respuesta: %w", "invalid JSON in the response: %w"), err)
 		}
 	}
 	return resp.StatusCode, nil
@@ -70,10 +84,10 @@ func (c *Client) StartDevice(ctx context.Context, name string) (Device, error) {
 		return d, err
 	}
 	if st == http.StatusTooManyRequests {
-		return d, errors.New("demasiados intentos; esperá un rato y reintentá")
+		return d, errors.New(i18n.Tr("demasiados intentos; esperá un rato y reintentá", "too many attempts; wait a while and try again"))
 	}
 	if st != http.StatusCreated || d.DeviceCode == "" {
-		return d, &Error{st, "no se pudo iniciar la autorización"}
+		return d, &Error{st, i18n.Tr("no se pudo iniciar la autorización", "could not start the authorization")}
 	}
 	return d, nil
 }
@@ -97,5 +111,5 @@ func (c *Client) PollDevice(ctx context.Context, deviceCode string) (string, err
 	case st == http.StatusTooManyRequests:
 		return "", ErrPending // seguimos esperando; el intervalo ya es prudente
 	}
-	return "", &Error{st, "respuesta inesperada al canjear el código"}
+	return "", &Error{st, i18n.Tr("respuesta inesperada al canjear el código", "unexpected response when exchanging the code")}
 }

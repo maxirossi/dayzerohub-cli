@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"encoding/json"
+	"github.com/maxirossi/mateprobe/i18n"
 	"sort"
 	"strings"
 )
@@ -51,7 +52,7 @@ func (a *analyzer) processPHP(dir string, f map[string]bool, sp *Subproject) {
 	if f["composer.json"] {
 		if b, ok := a.read(join(dir, "composer.json"), maxManifest); ok {
 			if err := json.Unmarshal(b, &cj); err != nil {
-				a.errorf("%s: JSON inválido: %v", join(dir, "composer.json"), err)
+				a.errorf(i18n.Tr("%s: JSON inválido: %v", "%s: invalid JSON: %v"), join(dir, "composer.json"), err)
 			} else {
 				haveJSON = true
 			}
@@ -68,10 +69,10 @@ func (a *analyzer) processPHP(dir string, f map[string]bool, sp *Subproject) {
 		sp.Files = append(sp.Files, join(dir, "composer.json"))
 		php := Component{Name: "PHP", Ecosystem: EcoComposer, Kind: KindLanguage, State: StateUnknown, Relation: RelDirect,
 			Evidence: join(dir, "composer.json"), Subproject: dir, Aliases: []string{"php"},
-			Notes: []string{"proyecto PHP; la versión del runtime no está declarada"}}
+			Notes: []string{i18n.Tr("proyecto PHP; la versión del runtime no está declarada", "PHP project; the runtime version is not declared")}}
 		if v := cj.Require["php"]; v != "" {
 			php.Constraint, php.State = cleanText(v, 60), StateConstraint
-			php.Notes = []string{"declarado en require.php"}
+			php.Notes = []string{i18n.Tr("declarado en require.php", "declared in require.php")}
 		}
 		a.add(php)
 	}
@@ -97,7 +98,7 @@ func (a *analyzer) processPHP(dir string, f map[string]bool, sp *Subproject) {
 		if b, ok := a.read(lockFile, maxLockfile); ok {
 			var lock composerLock
 			if err := json.Unmarshal(b, &lock); err != nil {
-				a.errorf("%s: JSON inválido: %v", lockFile, err)
+				a.errorf(i18n.Tr("%s: JSON inválido: %v", "%s: invalid JSON: %v"), lockFile, err)
 			} else {
 				emit := func(pk composerPkg, isDev bool) {
 					if pk.Name == "" {
@@ -126,7 +127,7 @@ func (a *analyzer) processPHP(dir string, f map[string]bool, sp *Subproject) {
 			}
 		}
 	} else if haveJSON {
-		a.res.Limitations = append(a.res.Limitations, join(dir, "composer.json")+": sin composer.lock; las versiones son restricciones declaradas, no versiones resueltas")
+		a.res.Limitations = append(a.res.Limitations, join(dir, "composer.json")+i18n.Tr(": sin composer.lock; las versiones son restricciones declaradas, no versiones resueltas", ": no composer.lock; versions are declared constraints, not resolved versions"))
 	}
 	names := make([]string, 0, len(direct))
 	for n := range direct {
@@ -141,7 +142,7 @@ func (a *analyzer) processPHP(dir string, f map[string]bool, sp *Subproject) {
 			State: StateConstraint, Relation: RelDirect, Scope: scopeOf(dev[n]), Evidence: join(dir, "composer.json"), Subproject: dir}
 		if isExact(rng) {
 			c.Version, c.State = strings.TrimPrefix(rng, "v"), StateExact
-			c.Notes = append(c.Notes, "versión fijada en composer.json")
+			c.Notes = append(c.Notes, i18n.Tr("versión fijada en composer.json", "version pinned in composer.json"))
 		}
 		if disp, ok := phpFrameworks[c.Name]; ok {
 			c.Aliases = append(c.Aliases, strings.ToLower(disp))

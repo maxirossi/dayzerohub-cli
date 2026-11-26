@@ -2,6 +2,7 @@ package correlate
 
 import (
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"sort"
 	"strings"
 
@@ -22,11 +23,11 @@ const (
 func DecisionLabel(d string) string {
 	switch d {
 	case Affected:
-		return "Versión local dentro del rango afectado"
+		return i18n.Tr("Versión local dentro del rango afectado", "Local version within the affected range")
 	case NotAffected:
-		return "Versión local fuera del rango informado"
+		return i18n.Tr("Versión local fuera del rango informado", "Local version outside the reported range")
 	}
-	return "No determinado"
+	return i18n.Tr("No determinado", "Undetermined")
 }
 
 // Decision es el resultado de comparar una versión local con un aviso.
@@ -86,19 +87,19 @@ func LookupComponents(comps []inventory.Component) []dzh.LookupComponent {
 // localVersion devuelve la versión comparable y sus salvedades.
 func localVersion(c inventory.Component) (v string, caveats []string, ok bool) {
 	for _, n := range c.Notes {
-		if strings.Contains(n, "reemplazado por") {
-			return "", []string{"el módulo está reemplazado (replace): el código efectivo no es el de este nombre"}, false
+		if isReplacedNote(n) {
+			return "", []string{i18n.Tr("el módulo está reemplazado (replace): el código efectivo no es el de este nombre", "the module is replaced (replace): the effective code is not that of this name")}, false
 		}
 	}
 	switch {
 	case c.State == inventory.StateExact && c.Version != "":
 		return c.Version, nil, true
 	case c.Ecosystem == inventory.EcoGo && c.State == inventory.StateConstraint && strings.HasPrefix(c.Constraint, "v"):
-		return c.Constraint, []string{"versión declarada en go.mod, no resuelta con herramientas de Go (suele ser la seleccionada si el go.mod está ordenado con `go mod tidy`)"}, true
+		return c.Constraint, []string{i18n.Tr("versión declarada en go.mod, no resuelta con herramientas de Go (suele ser la seleccionada si el go.mod está ordenado con `go mod tidy`)", "version declared in go.mod, not resolved with Go tooling (usually the selected one if go.mod is sorted with `go mod tidy`)")}, true
 	case c.State == inventory.StateConstraint:
-		return "", []string{fmt.Sprintf("la versión local es una restricción declarada (%s), no una versión resuelta", c.Constraint)}, false
+		return "", []string{fmt.Sprintf(i18n.Tr("la versión local es una restricción declarada (%s), no una versión resuelta", "the local version is a declared constraint (%s), not a resolved version"), c.Constraint)}, false
 	}
-	return "", []string{"la versión local es desconocida"}, false
+	return "", []string{i18n.Tr("la versión local es desconocida", "the local version is unknown")}, false
 }
 
 // Evaluate decide si la versión local cae dentro del rango de un aviso para
@@ -118,7 +119,7 @@ func Evaluate(c inventory.Component, adv dzh.SecAdvisory) Decision {
 		}
 	}
 	if len(rows) == 0 {
-		d.Reasons = append(d.Reasons, "el aviso no trae filas para este componente")
+		d.Reasons = append(d.Reasons, i18n.Tr("el aviso no trae filas para este componente", "the advisory has no rows for this component"))
 		return d
 	}
 	anyAffected, anyUndet := false, false
@@ -142,11 +143,11 @@ func Evaluate(c inventory.Component, adv dzh.SecAdvisory) Decision {
 		d.Result = NotAffected
 		if len(adv.Quality.Conflicts) > 0 {
 			d.Result = Undetermined
-			d.Reasons = append(d.Reasons, "las fuentes discrepan (quality.conflicts): no se elige una en silencio")
+			d.Reasons = append(d.Reasons, i18n.Tr("las fuentes discrepan (quality.conflicts): no se elige una en silencio", "the sources disagree (quality.conflicts): none is silently chosen"))
 		}
 	}
 	if len(adv.Quality.Conflicts) > 0 && d.Result == Affected {
-		d.Reasons = append(d.Reasons, "hay conflictos entre fuentes (quality.conflicts); se informa afectado porque al menos una fila lo indica")
+		d.Reasons = append(d.Reasons, i18n.Tr("hay conflictos entre fuentes (quality.conflicts); se informa afectado porque al menos una fila lo indica", "there are conflicts between sources (quality.conflicts); reported as affected because at least one row says so"))
 	}
 	d.Reasons = dedupeStrings(d.Reasons)
 	sort.Strings(d.Fixed)
@@ -156,34 +157,34 @@ func Evaluate(c inventory.Component, adv dzh.SecAdvisory) Decision {
 func evalRow(local string, a dzh.Affected) (string, []string, []string) {
 	src := a.Source
 	if src == "" {
-		src = "fuente desconocida"
+		src = i18n.Tr("fuente desconocida", "unknown source")
 	}
 	und := func(msg string) (string, []string, []string) {
 		return Undetermined, []string{fmt.Sprintf("[%s] %s", src, msg)}, nil
 	}
 	if a.Identity.Status != "verified" {
-		return und("identidad del componente sin verificar")
+		return und(i18n.Tr("identidad del componente sin verificar", "component identity not verified"))
 	}
 	if a.AffectedStatus != "affected" {
-		return und("estado de afectación desconocido")
+		return und(i18n.Tr("estado de afectación desconocido", "impact status unknown"))
 	}
 	if !version.Supported(a.VersionScheme) {
-		return und(fmt.Sprintf("esquema de versiones %q sin comparador", a.VersionScheme))
+		return und(fmt.Sprintf(i18n.Tr("esquema de versiones %q sin comparador", "version scheme %q has no comparator"), a.VersionScheme))
 	}
 	// Lista explícita de versiones afectadas.
 	for _, v := range a.Versions {
 		if c, err := version.Compare(a.VersionScheme, local, v); err == nil && c == 0 {
-			return Affected, []string{fmt.Sprintf("[%s] la versión %s figura en la lista explícita de versiones afectadas", src, local)}, nil
+			return Affected, []string{fmt.Sprintf(i18n.Tr("[%s] la versión %s figura en la lista explícita de versiones afectadas", "[%s] version %s is in the explicit list of affected versions"), src, local)}, nil
 		}
 	}
 	if len(a.Ranges) == 0 {
 		if len(a.Versions) > 0 {
-			return NotAffected, []string{fmt.Sprintf("[%s] la versión %s no figura en la lista explícita de versiones afectadas", src, local)}, nil
+			return NotAffected, []string{fmt.Sprintf(i18n.Tr("[%s] la versión %s no figura en la lista explícita de versiones afectadas", "[%s] version %s is not in the explicit list of affected versions"), src, local)}, nil
 		}
-		return und(rangeProblem(a, "sin rangos ni versiones"))
+		return und(rangeProblem(a, i18n.Tr("sin rangos ni versiones", "no ranges or versions")))
 	}
 	if a.RangeQuality != "usable" {
-		return und(rangeProblem(a, "rangos no evaluables (range_quality="+a.RangeQuality+")"))
+		return und(rangeProblem(a, i18n.Tr("rangos no evaluables (range_quality=", "non-evaluable ranges (range_quality=")+a.RangeQuality+")"))
 	}
 	allEvaluable := true
 	for _, r := range a.Ranges {
@@ -201,9 +202,9 @@ func evalRow(local string, a dzh.Affected) (string, []string, []string) {
 		}
 	}
 	if !allEvaluable {
-		return und("rango de tipo GIT: no se compara sin commits del repositorio")
+		return und(i18n.Tr("rango de tipo GIT: no se compara sin commits del repositorio", "GIT-type range: not compared without the repository commits"))
 	}
-	return NotAffected, []string{fmt.Sprintf("[%s] la versión %s queda fuera de todas las ramas informadas", src, local)}, nil
+	return NotAffected, []string{fmt.Sprintf(i18n.Tr("[%s] la versión %s queda fuera de todas las ramas informadas", "[%s] version %s is outside all the reported branches"), src, local)}, nil
 }
 
 func rangeProblem(a dzh.Affected, base string) string {
@@ -212,7 +213,7 @@ func rangeProblem(a dzh.Affected, base string) string {
 		msg += "; " + strings.Join(a.RangeNotes, "; ")
 	}
 	if a.RawRangeText != "" {
-		msg += fmt.Sprintf("; restricción original: «%s»", a.RawRangeText)
+		msg += fmt.Sprintf(i18n.Tr("; restricción original: «%s»", "; original constraint: «%s»"), a.RawRangeText)
 	}
 	return msg
 }
@@ -229,12 +230,12 @@ func evalRange(scheme, local string, r dzh.Range) (string, []string, string) {
 		switch {
 		case e.Introduced != "":
 			if hasOpen {
-				return Undetermined, nil, "eventos de rango con dos introduced seguidos"
+				return Undetermined, nil, i18n.Tr("eventos de rango con dos introduced seguidos", "range events with two consecutive introduced")
 			}
 			open, hasOpen = e.Introduced, true
 		case e.Fixed != "" || e.LastAffected != "" || e.Limit != "":
 			if !hasOpen {
-				return Undetermined, nil, "evento de cierre sin introduced"
+				return Undetermined, nil, i18n.Tr("evento de cierre sin introduced", "closing event without introduced")
 			}
 			b := branch{intro: open}
 			switch {
@@ -253,14 +254,14 @@ func evalRange(scheme, local string, r dzh.Range) (string, []string, string) {
 		branches = append(branches, branch{intro: open, kind: "open"})
 	}
 	if len(branches) == 0 {
-		return Undetermined, nil, "rango sin eventos"
+		return Undetermined, nil, i18n.Tr("rango sin eventos", "range without events")
 	}
 	cmp := func(a, b string) (int, error) { return version.Compare(scheme, a, b) }
 	for _, b := range branches {
 		if b.intro != "0" {
 			c, err := cmp(local, b.intro)
 			if err != nil {
-				return Undetermined, nil, fmt.Sprintf("no se pudo comparar %s con %s: %v", local, b.intro, err)
+				return Undetermined, nil, fmt.Sprintf(i18n.Tr("no se pudo comparar %s con %s: %v", "could not compare %s with %s: %v"), local, b.intro, err)
 			}
 			if c < 0 {
 				continue
@@ -271,13 +272,13 @@ func evalRange(scheme, local string, r dzh.Range) (string, []string, string) {
 		case "fixed", "limit":
 			c, err := cmp(local, b.end)
 			if err != nil {
-				return Undetermined, nil, fmt.Sprintf("no se pudo comparar %s con %s: %v", local, b.end, err)
+				return Undetermined, nil, fmt.Sprintf(i18n.Tr("no se pudo comparar %s con %s: %v", "could not compare %s with %s: %v"), local, b.end, err)
 			}
 			in = c < 0
 		case "last_affected":
 			c, err := cmp(local, b.end)
 			if err != nil {
-				return Undetermined, nil, fmt.Sprintf("no se pudo comparar %s con %s: %v", local, b.end, err)
+				return Undetermined, nil, fmt.Sprintf(i18n.Tr("no se pudo comparar %s con %s: %v", "could not compare %s with %s: %v"), local, b.end, err)
 			}
 			in = c <= 0
 		}
@@ -286,13 +287,13 @@ func evalRange(scheme, local string, r dzh.Range) (string, []string, string) {
 		}
 		switch b.kind {
 		case "fixed":
-			return Affected, []string{b.end}, fmt.Sprintf("la versión %s está en la rama introduced %s → fixed %s", local, b.intro, b.end)
+			return Affected, []string{b.end}, fmt.Sprintf(i18n.Tr("la versión %s está en la rama introduced %s → fixed %s", "version %s is in the branch introduced %s → fixed %s"), local, b.intro, b.end)
 		case "last_affected":
-			return Affected, nil, fmt.Sprintf("la versión %s está en la rama introduced %s → last_affected %s (sin versión corregida informada)", local, b.intro, b.end)
+			return Affected, nil, fmt.Sprintf(i18n.Tr("la versión %s está en la rama introduced %s → last_affected %s (sin versión corregida informada)", "version %s is in the branch introduced %s → last_affected %s (no fixed version reported)"), local, b.intro, b.end)
 		case "limit":
-			return Affected, nil, fmt.Sprintf("la versión %s está en la rama introduced %s → limit %s", local, b.intro, b.end)
+			return Affected, nil, fmt.Sprintf(i18n.Tr("la versión %s está en la rama introduced %s → limit %s", "version %s is in the branch introduced %s → limit %s"), local, b.intro, b.end)
 		}
-		return Affected, nil, fmt.Sprintf("la versión %s está en la rama abierta introduced %s (sin corrección informada)", local, b.intro)
+		return Affected, nil, fmt.Sprintf(i18n.Tr("la versión %s está en la rama abierta introduced %s (sin corrección informada)", "version %s is in the open branch introduced %s (no fix reported)"), local, b.intro)
 	}
 	return NotAffected, nil, ""
 }
@@ -321,9 +322,9 @@ func (u Unit) Label() string {
 	case u.Version != "":
 		return u.Name + "@" + u.Version
 	case u.Constraint != "":
-		return u.Name + " (declarada: " + u.Constraint + ")"
+		return u.Name + i18n.Tr(" (declarada: ", " (declared: ") + u.Constraint + ")"
 	}
-	return u.Name + " (versión desconocida)"
+	return u.Name + i18n.Tr(" (versión desconocida)", " (unknown version)")
 }
 
 // AdvisoryGroup es un aviso único: todos los registros que la fuente declara
@@ -406,7 +407,7 @@ func unitKey(c inventory.Component) string {
 		k += "?"
 	}
 	for _, n := range c.Notes {
-		if strings.Contains(n, "reemplazado por") {
+		if isReplacedNote(n) {
 			k += "\x00replaced"
 			break
 		}
@@ -684,7 +685,7 @@ func Technical(comps []inventory.Component, sec dzh.SecurityResult) TechResult {
 		var status, reason string
 		switch {
 		case !ok:
-			status, reason = "not_queried", "la consulta técnica no se completó para este componente"
+			status, reason = "not_queried", i18n.Tr("la consulta técnica no se completó para este componente", "the technical query did not complete for this component")
 		case r.Status == dzh.StatusMatched || r.Status == dzh.StatusNoMatch:
 			continue
 		default:
@@ -887,4 +888,9 @@ func dedupeStrings(s []string) []string {
 		}
 	}
 	return out
+}
+
+// isReplacedNote reconoce la nota de reemplazo (replace) que inventory emite en el idioma activo.
+func isReplacedNote(n string) bool {
+	return strings.Contains(n, "reemplazado por") || strings.Contains(n, "replaced by")
 }

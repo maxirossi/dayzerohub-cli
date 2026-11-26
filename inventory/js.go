@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"path"
 	"sort"
 	"strings"
@@ -364,7 +365,7 @@ func (a *analyzer) planJS() *jsPlan {
 		if p.files["package.json"] {
 			if b, ok := a.read(join(dir, "package.json"), maxManifest); ok {
 				if err := json.Unmarshal(b, &p.pkg); err != nil {
-					a.errorf("%s: JSON inválido: %v", join(dir, "package.json"), err)
+					a.errorf(i18n.Tr("%s: JSON inválido: %v", "%s: invalid JSON: %v"), join(dir, "package.json"), err)
 				} else {
 					p.hasPkg = true
 				}
@@ -480,7 +481,7 @@ func (a *analyzer) loadLock(pl *jsPlan, rel, kind string) *parsedLock {
 		l, err = parseNPMLockBytes(b)
 	}
 	if err != nil {
-		a.errorf("%s: lockfile inválido: %v", rel, err)
+		a.errorf(i18n.Tr("%s: lockfile inválido: %v", "%s: invalid lockfile: %v"), rel, err)
 		pl.locks[h] = nil
 		return nil
 	}
@@ -514,7 +515,7 @@ func (a *analyzer) assignLock(pl *jsPlan, p *jsProj) {
 				p.lockFile, p.lock, p.lockKey = rl, l, key
 				return
 			}
-			p.problem = fmt.Sprintf("miembro del workspace %s: el lockfile raíz %s no lo incluye (¿desactualizado?)", join(r.dir, "package.json"), rl)
+			p.problem = fmt.Sprintf(i18n.Tr("miembro del workspace %s: el lockfile raíz %s no lo incluye (¿desactualizado?)", "workspace member %s: the root lockfile %s does not include it (outdated?)"), join(r.dir, "package.json"), rl)
 		case r.files["yarn.lock"]:
 			rl := join(r.dir, "yarn.lock")
 			if l := a.loadLock(pl, rl, lockYarn); l != nil {
@@ -522,11 +523,11 @@ func (a *analyzer) assignLock(pl *jsPlan, p *jsProj) {
 				return
 			}
 		case r.files["pnpm-lock.yaml"]:
-			p.problem = fmt.Sprintf("miembro del workspace %s con %s: pnpm-lock.yaml no está soportado todavía", join(r.dir, "package.json"), join(r.dir, "pnpm-lock.yaml"))
+			p.problem = fmt.Sprintf(i18n.Tr("miembro del workspace %s con %s: pnpm-lock.yaml no está soportado todavía", "workspace member %s with %s: pnpm-lock.yaml is not supported yet"), join(r.dir, "package.json"), join(r.dir, "pnpm-lock.yaml"))
 			p.cause = CauseLockfileFmt
 			return
 		default:
-			p.problem = fmt.Sprintf("miembro del workspace %s: la raíz no tiene lockfile", join(r.dir, "package.json"))
+			p.problem = fmt.Sprintf(i18n.Tr("miembro del workspace %s: la raíz no tiene lockfile", "workspace member %s: the root has no lockfile"), join(r.dir, "package.json"))
 		}
 	}
 	switch {
@@ -569,7 +570,7 @@ func (a *analyzer) processJS(dir string, f map[string]bool, sp *Subproject) {
 		pf := join(dir, "pnpm-lock.yaml")
 		sp.Files = append(sp.Files, pf)
 		a.res.Unsupported = append(a.res.Unsupported, Unsupported{pf,
-			"pnpm-lock.yaml no está soportado todavía; no se analizaron las versiones resueltas (solo las restricciones de package.json)", CauseLockfileFmt})
+			i18n.Tr("pnpm-lock.yaml no está soportado todavía; no se analizaron las versiones resueltas (solo las restricciones de package.json)", "pnpm-lock.yaml is not supported yet; resolved versions were not analyzed (only the package.json constraints)"), CauseLockfileFmt})
 	}
 
 	if p.hasPkg {
@@ -578,9 +579,9 @@ func (a *analyzer) processJS(dir string, f map[string]bool, sp *Subproject) {
 		if v := pkg.Engines["node"]; v != "" {
 			node.Constraint = cleanText(v, 60)
 			node.State, node.Resolution = StateConstraint, ResDeclared
-			node.Notes = []string{"declarado en engines.node"}
+			node.Notes = []string{i18n.Tr("declarado en engines.node", "declared in engines.node")}
 		} else {
-			node.Notes = []string{"proyecto Node.js/JavaScript; la versión del runtime no está declarada"}
+			node.Notes = []string{i18n.Tr("proyecto Node.js/JavaScript; la versión del runtime no está declarada", "Node.js/JavaScript project; the runtime version is not declared")}
 		}
 		a.add(node)
 	}
@@ -599,7 +600,7 @@ func (a *analyzer) processJS(dir string, f map[string]bool, sp *Subproject) {
 	if _, ok := devNames["typescript"]; ok || prodNames["typescript"] != "" {
 		a.add(Component{Name: "TypeScript", Ecosystem: EcoNPM, Kind: KindLanguage, State: StateUnknown, Scope: ScopeUnknown,
 			Relation: RelDirect, Evidence: manifest, Manifest: manifest, Resolution: ResUnresolved, Subproject: dir, Aliases: []string{"typescript"},
-			Notes: []string{"detectado por la dependencia typescript"}})
+			Notes: []string{i18n.Tr("detectado por la dependencia typescript", "detected from the typescript dependency")}})
 	}
 
 	// Sin lockfile aplicable: la cobertura queda limitada a restricciones declaradas.
@@ -607,7 +608,7 @@ func (a *analyzer) processJS(dir string, f map[string]bool, sp *Subproject) {
 	case p.hasPkg && p.lock == nil && !f["pnpm-lock.yaml"] && p.cause == "":
 		reason := p.problem
 		if reason == "" {
-			reason = "sin lockfile; las versiones son restricciones declaradas, no versiones resueltas"
+			reason = i18n.Tr("sin lockfile; las versiones son restricciones declaradas, no versiones resueltas", "no lockfile; versions are declared constraints, not resolved versions")
 		}
 		a.res.Unsupported = append(a.res.Unsupported, Unsupported{manifest, reason, CauseNoLockfile})
 	case p.hasPkg && p.cause == CauseLockfileFmt:
@@ -642,9 +643,9 @@ func (a *analyzer) processJS(dir string, f map[string]bool, sp *Subproject) {
 			Scope: scopeOf(!isProd), Evidence: manifest, Resolution: ResDeclared}
 		if isExact(rng) {
 			c.Version, c.State, c.Resolution = strings.TrimPrefix(rng, "v"), StateExact, ResPinned
-			c.Notes = append(c.Notes, "versión fijada en package.json (ningún lockfile la confirma)")
+			c.Notes = append(c.Notes, i18n.Tr("versión fijada en package.json (ningún lockfile la confirma)", "version pinned in package.json (no lockfile confirms it)"))
 		} else if p.lock != nil {
-			c.Notes = append(c.Notes, "no aparece en "+p.lockFile)
+			c.Notes = append(c.Notes, i18n.Tr("no aparece en ", "not found in ")+p.lockFile)
 		}
 		emit(c)
 	}

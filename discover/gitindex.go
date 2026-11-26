@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/maxirossi/mateprobe/i18n"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,7 @@ func indexPath(gitRoot string) (string, error) {
 	line := strings.TrimSpace(strings.SplitN(string(b), "\n", 2)[0])
 	dir, ok := strings.CutPrefix(line, "gitdir:")
 	if !ok {
-		return "", errors.New(".git no tiene el formato «gitdir: ruta»")
+		return "", errors.New(i18n.Tr(".git no tiene el formato «gitdir: ruta»", ".git does not have the «gitdir: path» format"))
 	}
 	dir = strings.TrimSpace(dir)
 	if !filepath.IsAbs(dir) {
@@ -46,7 +47,7 @@ func readIndex(path string) ([]string, error) {
 		return nil, err
 	}
 	if st.Size() > maxIndexSize {
-		return nil, fmt.Errorf("índice demasiado grande (%d bytes, máximo %d)", st.Size(), maxIndexSize)
+		return nil, fmt.Errorf(i18n.Tr("índice demasiado grande (%d bytes, máximo %d)", "index too large (%d bytes, maximum %d)"), st.Size(), maxIndexSize)
 	}
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -78,21 +79,21 @@ func varint(b []byte) (uint64, int) {
 // y el checksum). Devuelve solo archivos regulares y symlinks.
 func parseIndex(b []byte) ([]string, error) {
 	if len(b) < 12 || string(b[:4]) != "DIRC" {
-		return nil, errors.New("no es un índice de Git (falta la cabecera DIRC)")
+		return nil, errors.New(i18n.Tr("no es un índice de Git (falta la cabecera DIRC)", "not a Git index (DIRC header missing)"))
 	}
 	ver := binary.BigEndian.Uint32(b[4:])
 	count := binary.BigEndian.Uint32(b[8:])
 	if ver < 2 || ver > 4 {
-		return nil, fmt.Errorf("versión de índice %d no soportada", ver)
+		return nil, fmt.Errorf(i18n.Tr("versión de índice %d no soportada", "index version %d not supported"), ver)
 	}
 	if uint64(count)*63 > uint64(len(b)) {
-		return nil, errors.New("el número de entradas excede el tamaño del archivo")
+		return nil, errors.New(i18n.Tr("el número de entradas excede el tamaño del archivo", "the number of entries exceeds the file size"))
 	}
 	var out []string
 	off, prev := 12, ""
 	for i := uint32(0); i < count; i++ {
 		if off+62 > len(b) {
-			return nil, errors.New("índice truncado")
+			return nil, errors.New(i18n.Tr("índice truncado", "truncated index"))
 		}
 		mode := binary.BigEndian.Uint32(b[off+24:])
 		flags := binary.BigEndian.Uint16(b[off+60:])
@@ -101,25 +102,25 @@ func parseIndex(b []byte) ([]string, error) {
 			start += 2
 		}
 		if start > len(b) {
-			return nil, errors.New("índice truncado")
+			return nil, errors.New(i18n.Tr("índice truncado", "truncated index"))
 		}
 		var path string
 		if ver == 4 {
 			strip, n := varint(b[start:])
 			if n == 0 || strip > uint64(len(prev)) {
-				return nil, errors.New("prefijo de ruta inválido (v4)")
+				return nil, errors.New(i18n.Tr("prefijo de ruta inválido (v4)", "invalid path prefix (v4)"))
 			}
 			p := start + n
 			end := bytes.IndexByte(b[p:], 0)
 			if end < 0 {
-				return nil, errors.New("ruta sin terminador")
+				return nil, errors.New(i18n.Tr("ruta sin terminador", "path without terminator"))
 			}
 			path = prev[:len(prev)-int(strip)] + string(b[p:p+end])
 			off = p + end + 1
 		} else {
 			end := bytes.IndexByte(b[start:], 0)
 			if end < 0 {
-				return nil, errors.New("ruta sin terminador")
+				return nil, errors.New(i18n.Tr("ruta sin terminador", "path without terminator"))
 			}
 			path = string(b[start : start+end])
 			off += ((start - off + end + 1) + 7) &^ 7
@@ -159,12 +160,12 @@ func (w *walker) loadTracked(gitRoot string) {
 					w.trackedDirs[d] = true
 				}
 			}
-			w.gitLines = append(w.gitLines, fmt.Sprintf("índice de Git: %d archivos tracked nunca se ignoran por .gitignore (--ignore-git-index lo desactiva)", len(w.tracked)))
+			w.gitLines = append(w.gitLines, fmt.Sprintf(i18n.Tr("índice de Git: %d archivos tracked nunca se ignoran por .gitignore (--ignore-git-index lo desactiva)", "Git index: %d tracked files are never ignored by .gitignore (--ignore-git-index disables this)"), len(w.tracked)))
 			return
 		}
 	}
 	if errors.Is(err, os.ErrNotExist) {
 		return // repositorio sin índice: nada tracked
 	}
-	w.rep.Errors = append(w.rep.Errors, fmt.Sprintf("aviso: no se pudo leer el índice de Git (se continúa sin él): %v", err))
+	w.rep.Errors = append(w.rep.Errors, fmt.Sprintf(i18n.Tr("aviso: no se pudo leer el índice de Git (se continúa sin él): %v", "warning: could not read the Git index (continuing without it): %v"), err))
 }
