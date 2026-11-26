@@ -767,7 +767,7 @@ func buildInventorySummary(v *View, in Input, cs compStats) {
 			covered[e.Ecosystem] = true
 		}
 	}
-	catName := map[string]string{inventory.EcoNPM: "npm", inventory.EcoComposer: "Packagist", inventory.EcoGo: "Go", inventory.EcoMaven: "Maven"}
+	catName := map[string]string{inventory.EcoNPM: "npm", inventory.EcoComposer: "Packagist", inventory.EcoGo: "Go", inventory.EcoMaven: "Maven", inventory.EcoOS: "DZH:OS", inventory.EcoApp: "DZH:Application"}
 	ecos := make([]string, 0, len(ecoProj))
 	for e := range ecoProj {
 		ecos = append(ecos, e)
@@ -814,7 +814,7 @@ func buildInventorySummary(v *View, in Input, cs compStats) {
 			continue
 		}
 		ev := i18n.Tr("inventariado, evaluación no disponible: ecosistema no cubierto por la fuente", "inventoried, evaluation not available: ecosystem not covered by the source")
-		if in.Security.Catalog != nil && covered[c.Ecosystem] {
+		if in.Security.Catalog != nil && covered[correlate.CatalogEcosystem(c)] {
 			ev = i18n.Tr("cubierto por la fuente", "covered by the source")
 		}
 		v.Host = append(v.Host, HostRow{Name: c.Name, Kind: c.Kind, Version: versionText(c), Evidence: c.Evidence, Evaluation: ev})

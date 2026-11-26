@@ -279,3 +279,19 @@ func TestTechnicalEndToEnd(t *testing.T) {
 		t.Error("WP Rocket no lo cubre la API técnica: debe conservarse")
 	}
 }
+
+func TestDistroMatches(t *testing.T) {
+	c := inventory.Component{Notes: []string{"distro=ubuntu:24.04"}}
+	cases := []struct {
+		row  string
+		want bool
+	}{{"", true}, {"Ubuntu:24.04:LTS", true}, {"Ubuntu:22.04:LTS", false}, {"Debian:12", false}, {"Ubuntu:Pro:24.04:LTS", false}}
+	for _, k := range cases {
+		if got := distroMatches(k.row, c); got != k.want {
+			t.Errorf("distroMatches(%q) = %v, want %v", k.row, got, k.want)
+		}
+	}
+	if distroMatches("Ubuntu:24.04:LTS", inventory.Component{}) {
+		t.Error("sin distro local no debe aplicar una fila de distro")
+	}
+}

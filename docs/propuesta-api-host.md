@@ -59,3 +59,16 @@ Salvedades a resolver en el backend:
 - OSV de Ubuntu lista CVE antiguos de `linux`: hay que usar el estado por release (`fixed`/`needed`/`not-affected`) y no
   marcar como afectado lo que ya está corregido en el paquete instalado.
 - NVD tiene límite de peticiones sin clave: ingerir en lote y cachear, no consultar por cada auditoría.
+
+## Estado de implementación (2026-11-26)
+Implementado en el backend (`zerodaynotices`, rama `feat/avisos-del-host`, commit `cf4750e`):
+- Ecosistemas **`DZH:OS`** (`linux-kernel`) y **`DZH:Application`** (`chrome`, `firefox`), extensión propia como WordPress.
+  El catálogo los lista como `DZH:OS` / `DZH:Application`; el CLI ya los usa con ese nombre.
+- NVD: CPE de `linux:linux_kernel`, `google:chrome` y `mozilla:firefox` → componentes con rangos (`numeric`).
+- OSV Ubuntu/Debian: solo el paquete `linux` → `DZH:OS/linux-kernel` (esquema `dpkg`, distro en `extra.distro`).
+  Hay que agregar `Ubuntu` y `Debian` a `config.ecosystems` de la fuente `osv` en el backoffice (las fuentes ya
+  existentes no cambian su config sola; las nuevas instalaciones la traen por defecto).
+- El CLI ignora filas de otra distro (`extra.distro`) y compara con `dpkg` o `numeric` según `version_scheme`.
+
+Pendiente: avisos de Mozilla (MFSA) como fuente propia, EPSS, paquetes `firefox-esr` / `chromium` de las distros, y
+esquemas `rpm` / `apk`.

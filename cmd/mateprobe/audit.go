@@ -451,7 +451,7 @@ func isUnauthorized(err error) bool {
 func withoutUncoveredHost(comps []inventory.Component, cat *dzh.Catalog) []inventory.Component {
 	out := make([]inventory.Component, 0, len(comps))
 	for _, c := range comps {
-		if (c.Ecosystem == inventory.EcoOS || c.Ecosystem == inventory.EcoApp) && (cat == nil || !cat.Covers(c.Ecosystem)) {
+		if (c.Ecosystem == inventory.EcoOS || c.Ecosystem == inventory.EcoApp) && (cat == nil || !cat.Covers(correlate.CatalogEcosystem(c))) {
 			continue
 		}
 		out = append(out, c)

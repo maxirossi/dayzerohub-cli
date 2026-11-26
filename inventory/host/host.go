@@ -97,9 +97,11 @@ func Collect(ctx context.Context, sys System) Result {
 		r.Limitations = append(r.Limitations, "inventario del host: solo Linux por ahora ("+sys.GOOS+" no soportado)")
 		return r
 	}
+	distro := ""
 	if b, err := sys.ReadFile("/etc/os-release"); err == nil {
 		if c, ok := parseOSRelease(string(b)); ok {
 			r.Components = append(r.Components, c)
+			distro = strings.ToLower(c.Name + ":" + c.Version) // p. ej. ubuntu:24.04
 		}
 	} else {
 		r.Limitations = append(r.Limitations, "no se pudo leer /etc/os-release")
@@ -110,6 +112,9 @@ func Collect(ctx context.Context, sys System) Result {
 			if pkg, v := kernelPackageVersion(ctx, sys, rel); v != "" {
 				c = component("linux-kernel", inventory.EcoOS, inventory.KindOS, v, "dpkg-query "+pkg)
 				c.Notes = append(c.Notes, "kernel en ejecución: "+rel)
+			}
+			if distro != "" {
+				c.Notes = append(c.Notes, "distro="+distro) // filtra avisos de otras distros (correlate.distroMatches)
 			}
 			r.Components = append(r.Components, c)
 		}

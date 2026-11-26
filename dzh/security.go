@@ -82,14 +82,15 @@ type Affected struct {
 	Identity  struct {
 		Status string `json:"status"`
 	} `json:"identity"`
-	VersionScheme  string   `json:"version_scheme"`
-	AffectedStatus string   `json:"affected_status"`
-	Versions       []string `json:"versions"`
-	Ranges         []Range  `json:"ranges"`
-	RangeQuality   string   `json:"range_quality"`
-	RangeNotes     []string `json:"range_notes"`
-	RawRangeText   string   `json:"raw_range_text"`
-	Source         string   `json:"source"`
+	VersionScheme  string         `json:"version_scheme"`
+	AffectedStatus string         `json:"affected_status"`
+	Versions       []string       `json:"versions"`
+	Ranges         []Range        `json:"ranges"`
+	RangeQuality   string         `json:"range_quality"`
+	RangeNotes     []string       `json:"range_notes"`
+	RawRangeText   string         `json:"raw_range_text"`
+	Source         string         `json:"source"`
+	Extra          map[string]any `json:"extra"`
 }
 
 type CVSS struct {

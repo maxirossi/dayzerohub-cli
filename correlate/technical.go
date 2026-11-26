@@ -48,10 +48,29 @@ func ecosystemOf(c inventory.Component) string {
 		return "Go"
 	case inventory.EcoMaven:
 		return "Maven"
-	case inventory.EcoOS, inventory.EcoApp:
-		return c.Ecosystem // identidades del host: "os" / "application" (propuesta docs/propuesta-api-host.md)
+	case inventory.EcoOS:
+		return "DZH:OS" // extensión propia del catálogo para el equipo (kernel, SO)
+	case inventory.EcoApp:
+		return "DZH:Application"
 	}
 	return ""
+}
+
+// CatalogEcosystem devuelve el nombre del ecosistema del componente en el catálogo ("" si no se consulta).
+func CatalogEcosystem(c inventory.Component) string { return ecosystemOf(c) }
+
+// distroMatches indica si una fila de aviso con distro (p. ej. "Ubuntu:24.04:LTS") aplica al equipo local.
+// Las filas sin distro (NVD) aplican siempre; las de distro solo si coincide la del equipo.
+func distroMatches(rowDistro string, c inventory.Component) bool {
+	if rowDistro == "" {
+		return true
+	}
+	for _, n := range c.Notes {
+		if local, ok := strings.CutPrefix(n, "distro="); ok {
+			return strings.HasPrefix(strings.ToLower(rowDistro)+":", local+":")
+		}
+	}
+	return false
 }
 
 // Queryable indica si un componente se consulta en la API técnica: solo
@@ -117,6 +136,9 @@ func Evaluate(c inventory.Component, adv dzh.SecAdvisory) Decision {
 	var rows []dzh.Affected
 	for _, a := range adv.Affected {
 		if strings.EqualFold(a.Name, c.Name) && a.Ecosystem == ecosystemOf(c) {
+			if d, _ := a.Extra["distro"].(string); !distroMatches(d, c) {
+				continue // aviso de otra distro: los números de paquete no son comparables
+			}
 			rows = append(rows, a)
 		}
 	}
