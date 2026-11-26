@@ -134,6 +134,8 @@ Funciona con estos ecosistemas:
 
 **Privacidad** - no se guardan valores de cookies ni tokens, las URLs ocultan credenciales y no se carga el `.env` del proyecto auditado.
 
+**Resumen de uso** - al terminar un `audit` con la key de `login`, se envía un resumen mínimo para el panel de DayZeroHub (lo ve solo el administrador): versión de mateprobe, sistema operativo y arquitectura, completo/parcial, un identificador de proyecto (hash de 12 caracteres, no reversible a la ruta) y **solo conteos** (componentes, avisos, afectados, indeterminados, fuera de rango). El servidor además ve tu IP y deriva el país. **Nunca** se envían rutas, nombres de proyecto o de paquetes, versiones ni los avisos encontrados. Para desactivarlo: `MATEPROBE_TELEMETRY=off`.
+
 Cada tecnología de `scan` se etiqueta `declared`, `signature` o `inferred`, con su `confidence`: siempre sabés qué se observó y qué se dedujo.
 
 ## Stack
@@ -355,7 +357,7 @@ Las claves viajan en la cabecera `X-API-Key` (nunca en la query). Las rutas `/ap
 | `GET /api/v1/security/advisories` | Catálogo técnico paginado por cursor opaco (método `Advisories`; el informe no lo necesita) |
 | `GET /api/v1/news?lang=es` | (con `news_api_key`) Feed editorial: `{items,page,page_size,max_pages}`, hasta 5 páginas de 20 |
 
-El cliente (`net/http`) usa timeout, cancela con Ctrl+C, limita el tamaño de la respuesta, reintenta 429/5xx/red con backoff exponencial y jitter (respetando `Retry-After`, hasta 30 s), **no reintenta 401** (los 401 repetidos pueden banear la IP; ante un 401 se cortan todas las consultas y se genera el informe parcial), no reenvía `X-API-Key` a otro origen en una redirección y tolera campos extra o `null` (contrato `dzh-security/1`). Si algo falla se genera igualmente un **informe parcial** con el inventario local y el estado «Consulta de vulnerabilidades no completada». **Privacidad:** a la API técnica solo viaja ecosistema + nombre del paquete; jamás versiones, rutas ni contenido de archivos.
+El cliente (`net/http`) usa timeout, cancela con Ctrl+C, limita el tamaño de la respuesta, reintenta 429/5xx/red con backoff exponencial y jitter (respetando `Retry-After`, hasta 30 s), **no reintenta 401** (los 401 repetidos pueden banear la IP; ante un 401 se cortan todas las consultas y se genera el informe parcial), no reenvía `X-API-Key` a otro origen en una redirección y tolera campos extra o `null` (contrato `dzh-security/1`). Si algo falla se genera igualmente un **informe parcial** con el inventario local y el estado «Consulta de vulnerabilidades no completada». **Privacidad:** a la API técnica solo viaja ecosistema + nombre del paquete; jamás versiones, rutas ni contenido de archivos (más el resumen de uso descrito en «Qué obtenés»).
 
 ### Maven
 

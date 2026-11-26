@@ -35,6 +35,7 @@ const (
 	securityCatalog  = "/api/v1/security/catalog"         // GET  alcance y frescura del catálogo
 	securityAdvisory = "/api/v1/security/advisories"      // GET  catálogo técnico paginado (+ /{id})
 	securityLookup   = "/api/v1/security/packages/lookup" // POST consulta por lote de componentes
+	usagePath        = "/api/v1/security/usage"           // POST resumen de uso (solo conteos)
 )
 
 const (

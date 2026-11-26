@@ -134,6 +134,8 @@ Works with these ecosystems:
 
 **Privacy** - cookie values and tokens are never stored, URLs hide credentials, and the audited project's own `.env` is never loaded.
 
+**Usage summary** - when an `audit` finishes with the key from `login`, a minimal summary is sent to the DayZeroHub dashboard (visible only to the administrator): mateprobe version, operating system and architecture, complete/partial, a project identifier (a 12-character hash, not reversible to the path) and **counts only** (components, advisories, affected, undetermined, out of range). The server also sees your IP and derives the country. Paths, project or package names, versions and the advisories found are **never** sent. To disable it: `MATEPROBE_TELEMETRY=off`.
+
 Every `scan` technology is tagged `declared`, `signature` or `inferred`, with its `confidence`: you always know what was observed and what was deduced.
 
 ## Stack

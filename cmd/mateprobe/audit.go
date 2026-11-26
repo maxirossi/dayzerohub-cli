@@ -237,6 +237,15 @@ func runAudit(args []string, stdout, stderr io.Writer) int {
 
 	printAuditSummary(stdout, view, qres, corr, outPath)
 	secIncomplete := sec.Skipped != "" || sec.CatalogErr != nil || sec.Result.Err != nil
+	if !unauthorized {
+		ts := sec.Tech.Summary
+		status := "complete"
+		if secIncomplete || interrupted {
+			status = "partial"
+		}
+		reportUsage(cl, dzh.UsageEvent{Status: status, ProjectID: projectID(*path), Components: len(inv.Components),
+			Advisories: ts.Advisories, Affected: ts.AdvAffected, Undetermined: ts.AdvUndetermined, OutOfRange: ts.AdvOutOfRange})
+	}
 	if *open {
 		if err := auditOpen(outPath); err != nil {
 			fmt.Fprintf(stderr, i18n.Tr("AVISO: no se pudo abrir el informe (%v). Sigue disponible en %s\n", "WARNING: could not open the report (%v). It is still available at %s\n"), err, outPath)

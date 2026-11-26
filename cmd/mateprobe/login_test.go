@@ -54,3 +54,18 @@ func TestLoginFlowSavesKey(t *testing.T) {
 		t.Fatal("la key no se borró")
 	}
 }
+
+func TestTelemetryOptOutAndProjectID(t *testing.T) {
+	t.Setenv("MATEPROBE_TELEMETRY", "off")
+	if telemetryEnabled() {
+		t.Fatal("MATEPROBE_TELEMETRY=off debe desactivar el envío")
+	}
+	t.Setenv("MATEPROBE_TELEMETRY", "")
+	if !telemetryEnabled() {
+		t.Fatal("por defecto está activo")
+	}
+	id := projectID("/home/x/cliente-secreto")
+	if len(id) != 12 || strings.Contains(id, "secreto") || id != projectID("/home/x/cliente-secreto") {
+		t.Fatalf("id inválido: %q", id)
+	}
+}
