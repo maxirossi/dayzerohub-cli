@@ -1,4 +1,4 @@
-# mateprobe technical reference
+# DayZeroHub CLI technical reference
 
 ← [README](../README.en.md)
 
@@ -158,7 +158,7 @@ The walk **prunes** excluded directories before reading their contents (they are
 
 **Precedence** (the last match wins): default exclusions → `.gitignore` → `--exclude` → `--include`. By default these are excluded (directories only, at any level): `.git`, `.claude/worktrees`, `node_modules`, `target`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `vendor`, caches (`.cache`, `__pycache__`, `.venv`, `.gradle`, …). `--include` re-includes even if the exclusion comes from the defaults or from `.gitignore`; a pattern without a leading `/` forces reading all excluded directories (use anchored paths).
 
-**Tracked files:** Git ignores `.gitignore` for files already in the index, so mateprobe reads `.git/index` (v2–v4, without running `git`) and does not discard a tracked file because of a `.gitignore` rule. Defaults and `--exclude` take precedence over the index. `--ignore-git-index` turns it off.
+**Tracked files:** Git ignores `.gitignore` for files already in the index, so DayZeroHub CLI reads `.git/index` (v2–v4, without running `git`) and does not discard a tracked file because of a `.gitignore` rule. Defaults and `--exclude` take precedence over the index. `--ignore-git-index` turns it off.
 
 Symlinks are not followed by default; with `--follow-symlinks` only if the real target lies inside `--path` and has not been visited. The report lists the applied rules and the skipped directories with their reason.
 

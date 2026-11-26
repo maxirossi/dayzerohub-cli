@@ -1,4 +1,4 @@
-# Referencia técnica de mateprobe
+# Referencia técnica de DayZeroHub CLI
 
 ← [README](../README.md)
 
@@ -158,7 +158,7 @@ El recorrido **poda** los directorios excluidos antes de leer su contenido (no s
 
 **Precedencia** (el último que coincide gana): exclusiones por defecto → `.gitignore` → `--exclude` → `--include`. Por defecto se excluyen (solo directorios, en cualquier nivel): `.git`, `.claude/worktrees`, `node_modules`, `target`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `vendor`, cachés (`.cache`, `__pycache__`, `.venv`, `.gradle`, …). `--include` re-incluye aunque la exclusión venga de los defectos o de `.gitignore`; un patrón sin `/` inicial obliga a leer todos los directorios excluidos (usá rutas ancladas).
 
-**Archivos trackeados:** Git ignora `.gitignore` para los archivos que ya están en el índice, así que mateprobe lee `.git/index` (v2–v4, sin ejecutar `git`) y no descarta un archivo trackeado por una regla de `.gitignore`. Los defectos y `--exclude` mandan sobre el índice. `--ignore-git-index` lo desactiva.
+**Archivos trackeados:** Git ignora `.gitignore` para los archivos que ya están en el índice, así que DayZeroHub CLI lee `.git/index` (v2–v4, sin ejecutar `git`) y no descarta un archivo trackeado por una regla de `.gitignore`. Los defectos y `--exclude` mandan sobre el índice. `--ignore-git-index` lo desactiva.
 
 Los symlinks no se siguen por defecto; con `--follow-symlinks` solo si el destino real queda dentro de `--path` y no fue visitado. El informe lista las reglas aplicadas y los directorios omitidos con su motivo.
 
