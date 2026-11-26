@@ -6,6 +6,7 @@ package host
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"regexp"
@@ -27,11 +28,12 @@ type System struct {
 	GOOS       string
 	ReadFile   func(path string) ([]byte, error)
 	RunVersion func(ctx context.Context, bin string) (string, error) // salida de "bin --version"
+	PkgVersion func(ctx context.Context, pkg string) (string, error) // versión instalada de un paquete dpkg ("" si no existe)
 }
 
 // Default devuelve el acceso real al equipo.
 func Default() System {
-	return System{GOOS: runtime.GOOS, ReadFile: os.ReadFile, RunVersion: runVersion}
+	return System{GOOS: runtime.GOOS, ReadFile: os.ReadFile, RunVersion: runVersion, PkgVersion: dpkgVersion}
 }
 
 // apps conocidas: nombre del componente → binarios candidatos (el primero que exista gana).
@@ -57,6 +59,37 @@ func runVersion(ctx context.Context, bin string) (string, error) {
 	return string(out), err
 }
 
+var pkgNameRe = regexp.MustCompile(`^[A-Za-z0-9.+_-]+$`)
+
+// dpkgVersion consulta "dpkg-query -W -f=${Version} <pkg>" (nombre validado, sin shell).
+func dpkgVersion(ctx context.Context, pkg string) (string, error) {
+	if !pkgNameRe.MatchString(pkg) {
+		return "", errors.New("nombre de paquete inválido")
+	}
+	path, err := exec.LookPath("dpkg-query")
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, path, "-W", "-f=${Version}", pkg).Output()
+	return strings.TrimSpace(string(out)), err
+}
+
+// kernelPackageVersion devuelve la versión del paquete del kernel en ejecución
+// (p. ej. 6.8.0-45.45 para 6.8.0-45-generic), que es la que usan los avisos de la distro.
+func kernelPackageVersion(ctx context.Context, sys System, release string) (pkg, version string) {
+	if sys.PkgVersion == nil {
+		return "", ""
+	}
+	for _, p := range []string{"linux-image-" + release, "linux-image-unsigned-" + release} {
+		if v, err := sys.PkgVersion(ctx, p); err == nil && v != "" {
+			return p, v
+		}
+	}
+	return "", ""
+}
+
 // Collect inventaría el host.
 func Collect(ctx context.Context, sys System) Result {
 	var r Result
@@ -72,8 +105,13 @@ func Collect(ctx context.Context, sys System) Result {
 		r.Limitations = append(r.Limitations, "no se pudo leer /etc/os-release")
 	}
 	if b, err := sys.ReadFile("/proc/sys/kernel/osrelease"); err == nil {
-		if v := strings.TrimSpace(string(b)); v != "" {
-			r.Components = append(r.Components, component("linux-kernel", inventory.EcoOS, inventory.KindOS, v, "/proc/sys/kernel/osrelease"))
+		if rel := strings.TrimSpace(string(b)); rel != "" {
+			c := component("linux-kernel", inventory.EcoOS, inventory.KindOS, rel, "/proc/sys/kernel/osrelease")
+			if pkg, v := kernelPackageVersion(ctx, sys, rel); v != "" {
+				c = component("linux-kernel", inventory.EcoOS, inventory.KindOS, v, "dpkg-query "+pkg)
+				c.Notes = append(c.Notes, "kernel en ejecución: "+rel)
+			}
+			r.Components = append(r.Components, c)
 		}
 	}
 	for _, a := range apps {
