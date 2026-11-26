@@ -213,6 +213,14 @@ func WriteMarkdown(w io.Writer, v View) error {
 		rows = append(rows, []string{mdText(e.Name), mdText(e.Projects), mdText(e.Inventory), mdText(e.Evaluation)})
 	}
 	mdTable(&b, []string{i18n.Tr("Ecosistema", "Ecosystem"), i18n.Tr("Proyectos", "Projects"), i18n.Tr("Inventario", "Inventory"), i18n.Tr("Evaluación de avisos", "Advisory assessment")}, rows)
+	if len(v.Host) > 0 {
+		b.WriteString(i18n.Tr("### Entorno del equipo\n\n", "### Host environment\n\n"))
+		hrow := make([][]string, 0, len(v.Host))
+		for _, h := range v.Host {
+			hrow = append(hrow, []string{mdText(h.Name), mdText(h.Kind), mdText(h.Version), mdText(h.Evidence), mdText(h.Evaluation)})
+		}
+		mdTable(&b, []string{i18n.Tr("Nombre", "Name"), i18n.Tr("Tipo", "Type"), i18n.Tr("Versión", "Version"), i18n.Tr("Evidencia", "Evidence"), i18n.Tr("Evaluación de avisos", "Advisory assessment")}, hrow)
+	}
 	fmt.Fprintf(&b, i18n.Tr("### Proyectos o servicios detectados (%d)\n\n", "### Projects or services detected (%d)\n\n"), len(v.Projects)+v.ProjectsMore)
 	prow := make([][]string, 0, len(v.Projects))
 	for _, p := range v.Projects {

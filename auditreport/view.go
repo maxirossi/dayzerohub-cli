@@ -159,6 +159,13 @@ type ProjRow struct{ Path, Name, Ecosystems, Lockfile, Workspace string }
 // TechRow es una tecnología distinta (lenguaje, framework, CMS, plugin).
 type TechRow struct{ Name, Kind, Versions, Projects string }
 
+// HostRow es un componente del equipo (audit --host).
+type HostRow struct{ Name, Kind, Version, Evidence, Evaluation string }
+
+func isHost(c inventory.Component) bool {
+	return c.Ecosystem == inventory.EcoOS || c.Ecosystem == inventory.EcoApp
+}
+
 // NoDataRow es una identidad consultada sin datos utilizables.
 type NoDataRow struct{ Component, Status, Reason, Where string }
 
@@ -200,6 +207,7 @@ type View struct {
 	OutOfRangeMore    int
 	CoverageGroups    []CoverGroup
 	Ecosystems        []EcoRow
+	Host              []HostRow
 	Projects          []ProjRow
 	ProjectsMore      int
 	Technologies      []TechRow
@@ -639,7 +647,7 @@ func statsOf(inv *inventory.Result) compStats {
 	res := map[string]bool{}
 	unres := map[string]bool{}
 	for _, c := range inv.Components {
-		if c.Kind == inventory.KindLanguage {
+		if c.Kind == inventory.KindLanguage || isHost(c) {
 			continue
 		}
 		s.occ++
@@ -696,7 +704,7 @@ func buildCoverage(v *View, in Input) compStats {
 	// Versiones no resueltas entre los paquetes consultables.
 	seen := map[string]bool{}
 	for _, c := range inv.Components {
-		if c.Kind == inventory.KindLanguage || c.State == inventory.StateExact || !correlate.Queryable(c) {
+		if c.Kind == inventory.KindLanguage || isHost(c) || c.State == inventory.StateExact || !correlate.Queryable(c) {
 			continue
 		}
 		k := c.Ecosystem + "\x00" + c.Name + "\x00" + c.Constraint
@@ -798,6 +806,18 @@ func buildInventorySummary(v *View, in Input, cs compStats) {
 	sort.Strings(unsupEco)
 	for _, e := range unsupEco {
 		v.Ecosystems = append(v.Ecosystems, EcoRow{Name: e, Projects: "—", Inventory: i18n.Tr("no soportado", "unsupported"), Evaluation: i18n.Tr("módulo sin evaluar", "module not evaluated")})
+	}
+
+	// Entorno del equipo (audit --host).
+	for _, c := range inv.Components {
+		if !isHost(c) {
+			continue
+		}
+		ev := i18n.Tr("inventariado, evaluación no disponible: ecosistema no cubierto por la fuente", "inventoried, evaluation not available: ecosystem not covered by the source")
+		if in.Security.Catalog != nil && covered[c.Ecosystem] {
+			ev = i18n.Tr("cubierto por la fuente", "covered by the source")
+		}
+		v.Host = append(v.Host, HostRow{Name: c.Name, Kind: c.Kind, Version: versionText(c), Evidence: c.Evidence, Evaluation: ev})
 	}
 
 	// Proyectos.

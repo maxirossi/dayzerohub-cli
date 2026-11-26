@@ -216,3 +216,23 @@ func TestTechnicalSections(t *testing.T) {
 		}
 	}
 }
+
+func TestHostSection(t *testing.T) {
+	in := input(t)
+	in.Inventory.Components = append(in.Inventory.Components, inventory.Component{Name: "chrome", Ecosystem: inventory.EcoApp,
+		Kind: inventory.KindApp, Version: "131.0.6778.85", State: inventory.StateExact, Relation: inventory.RelDirect,
+		Subproject: "(host)", Evidence: "google-chrome --version"})
+	h, m := render(t, in)
+	for _, out := range []string{h, m} {
+		if !strings.Contains(out, "131.0.6778.85") || !strings.Contains(out, "google-chrome --version") {
+			t.Fatal("falta la sección del equipo")
+		}
+	}
+	if !strings.Contains(m, "no cubierto") && !strings.Contains(m, "not covered") {
+		t.Error("debe indicar que el ecosistema no está cubierto")
+	}
+	_, m2 := render(t, input(t))
+	if strings.Contains(m2, "Entorno del equipo") || strings.Contains(m2, "Host environment") {
+		t.Error("sin --host no debe haber sección del equipo")
+	}
+}
