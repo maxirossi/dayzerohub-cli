@@ -26,6 +26,18 @@ sha256sum -c SHA256SUMS --ignore-missing # opcional: verificar integridad
 
 Conviene renombrarlo a `mateprobe` y dejarlo en el `PATH` (p. ej. `sudo mv mateprobe-0.1.0-linux-amd64 /usr/local/bin/mateprobe`).
 
+#### Instalar en el `PATH`
+
+Si al ejecutar `mateprobe login` aparece `mateprobe: no se encontró la orden`, el binario no está en el `PATH`. Instalalo (sin `sudo`) en `~/.local/bin`:
+
+```bash
+mkdir -p ~/.local/bin
+install mateprobe-0.1.0-linux-amd64 ~/.local/bin/mateprobe   # o: make build && install dist/mateprobe ~/.local/bin/mateprobe
+mateprobe --version
+```
+
+Si `~/.local/bin` no está en el `PATH`, agregalo a `~/.bashrc` o `~/.zshrc`: `export PATH="$HOME/.local/bin:$PATH"`. Para una instalación global: `sudo install <binario> /usr/local/bin/mateprobe`.
+
 En macOS los binarios no están firmados: Gatekeeper puede pedir aprobación manual (`xattr -d com.apple.quarantine <archivo>`).
 
 ## Inicio rápido
