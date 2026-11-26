@@ -2,15 +2,30 @@
 
 **Español** · [English](README.en.md)
 
-Detecta las tecnologías de sitios web (servidor, lenguaje, CMS, frameworks, CDN, analytics…) **desde tu máquina**, a partir de dominios, URLs, IPs, CIDR o rangos de IPs. Un único ejecutable: no requiere Go, Docker, Node ni base de datos, y `scan` no envía nada a terceros (los subcomandos `login` y `audit` solo hablan con DayZeroHub; ver [Inicio rápido](#inicio-rápido) y [Auditoría de proyectos](#auditoría-de-proyectos-audit)).
+**Un CLI de un solo ejecutable.** Escribí `mateprobe audit` y lee tu proyecto, inventaría sus dependencias, las cruza con los avisos de [DayZeroHub](https://dayzerohub.site) y te devuelve un informe de qué te afecta de verdad. Con `mateprobe scan` detecta las tecnologías de cualquier sitio, desde tu máquina.
 
-Cada hallazgo indica **qué evidencia lo respalda y cuánto se puede confiar en él**; no solo un nombre. Pensado como insumo para MateAudit (ver [Integración](#integración-con-mateaudit)).
+Cada hallazgo dice **qué evidencia lo respalda y cuánto se puede confiar en él**, no solo un nombre. Sin Go, Docker, Node ni base de datos.
 
-> mateprobe es **pasivo**: hace `GET` normales y analiza lo que el sitio responde. No enumera directorios, no hace fuerza bruta ni prueba vulnerabilidades. Usalo solo sobre sistemas propios o con autorización.
+> mateprobe es **pasivo**: hace `GET` normales y lee lo que el sitio responde. No enumera directorios, no hace fuerza bruta ni prueba vulnerabilidades. Usalo solo sobre sistemas propios o con autorización.
+
+```
+mateprobe login                                  # autoriza este equipo con tu cuenta de DayZeroHub
+mateprobe audit --path ./mi-proyecto --open      # audita un proyecto local y abre el informe
+mateprobe scan --target ejemplo.com              # detecta las tecnologías de un sitio
+```
+
+```
+reports/
+└── mi-proyecto-20260101-120000.html   informe autocontenido, sin JS ni recursos externos
+--export-dir/
+├── inventory.json / inventory.csv     todos los componentes detectados
+├── findings.json                      avisos y su evaluación
+└── coverage.json                      qué se analizó y qué no (con el motivo)
+```
 
 ## Instalación
 
-Descargá el binario de tu plataforma desde la página de [**Releases**](https://github.com/maxirossi/dayzerohub-cli/releases/latest) y ejecutalo. No requiere Go, Docker, Node ni base de datos.
+**Requiere:** solo el binario. Descargalo desde [**Releases**](https://github.com/maxirossi/dayzerohub-cli/releases/latest).
 
 | Sistema | Archivo |
 |---|---|
@@ -19,59 +34,88 @@ Descargá el binario de tu plataforma desde la página de [**Releases**](https:/
 | macOS Intel / Apple Silicon | `mateprobe-<versión>-darwin-amd64` / `-darwin-arm64` |
 
 ```bash
-chmod +x mateprobe-0.1.0-linux-amd64     # Linux/macOS
-sha256sum -c SHA256SUMS --ignore-missing # opcional: verificar integridad
-./mateprobe-0.1.0-linux-amd64 --version
-```
-
-Conviene renombrarlo a `mateprobe` y dejarlo en el `PATH` (p. ej. `sudo mv mateprobe-0.1.0-linux-amd64 /usr/local/bin/mateprobe`).
-
-#### Instalar en el `PATH`
-
-Si al ejecutar `mateprobe login` aparece `mateprobe: no se encontró la orden`, el binario no está en el `PATH`. Instalalo (sin `sudo`) en `~/.local/bin`:
-
-```bash
+sha256sum -c SHA256SUMS --ignore-missing                       # opcional: verificar integridad
 mkdir -p ~/.local/bin
-install mateprobe-0.1.0-linux-amd64 ~/.local/bin/mateprobe   # o: make build && install dist/mateprobe ~/.local/bin/mateprobe
+install mateprobe-0.1.0-linux-amd64 ~/.local/bin/mateprobe     # Linux/macOS, sin sudo
 mateprobe --version
 ```
 
-Si `~/.local/bin` no está en el `PATH`, agregalo a `~/.bashrc` o `~/.zshrc`: `export PATH="$HOME/.local/bin:$PATH"`. Para una instalación global: `sudo install <binario> /usr/local/bin/mateprobe`.
+> **`mateprobe: no se encontró la orden`:** el binario no está en el `PATH`. Si `~/.local/bin` no está, agregalo a `~/.bashrc` o `~/.zshrc`: `export PATH="$HOME/.local/bin:$PATH"`. Para instalar para todo el sistema: `sudo install <binario> /usr/local/bin/mateprobe`.
 
-En macOS los binarios no están firmados: Gatekeeper puede pedir aprobación manual (`xattr -d com.apple.quarantine <archivo>`).
+> **macOS:** los binarios no están firmados; Gatekeeper puede pedir aprobación manual (`xattr -d com.apple.quarantine <archivo>`).
 
-## Inicio rápido
+Después:
 
-```bash
-mateprobe login                                  # autoriza este equipo con tu cuenta de DayZeroHub
-mateprobe audit --path ./mi-proyecto --open      # audita un proyecto local y abre el informe
-mateprobe scan --target ejemplo.com              # detecta las tecnologías de un sitio
+```
+mateprobe login
 ```
 
 `mateprobe login` te muestra un link y un código. Abrí el link con tu sesión de [DayZeroHub](https://dayzerohub.site/app) (hace falta una cuenta registrada y verificada), confirmá el código y la terminal recibe una **API key personal** que queda guardada en tu equipo. Se administra (y se revoca) desde la sección **API técnica** del panel. `mateprobe logout` borra la key local.
 
-### Idioma
-
-La interfaz está en **español e inglés**: `--lang es|en` (opción global), la variable `MATEPROBE_LANG` o, si no hay ninguna, el idioma del sistema (`LANG`). Por defecto, español. Aplica a la ayuda, los mensajes, la salida de `scan` y el informe de `audit`.
-
-```bash
-mateprobe --lang en audit --path ./my-project
-MATEPROBE_LANG=en mateprobe scan --target example.com
-```
-
-### Compilar desde el código
+<details>
+<summary>Compilar desde el código</summary>
 
 Requiere Go ≥ 1.27 (solo para compilar). Repositorio: <https://github.com/maxirossi/dayzerohub-cli>.
 
 ```bash
-make check     # gofmt + go vet + go test -race
-make build     # dist/mateprobe para tu plataforma
-make dist      # 6 binarios + SHA256SUMS en dist/
-make examples  # regenera examples/ desde servidores locales y fixtures
+make check       # gofmt + go vet + go test -race
+make build       # dist/mateprobe para tu plataforma
+make dist        # 6 binarios + SHA256SUMS en dist/
+make examples    # regenera examples/ desde servidores locales y fixtures
 make build-linux # dist/mateprobe-<versión>-linux-amd64
 ```
 
+</details>
+
 ## Uso
+
+```
+mateprobe audit --path ./proyecto                          # audita un proyecto local
+mateprobe audit --path ./proyecto --format md --output ./informe.md
+mateprobe audit --path ./proyecto --export-dir ./out       # inventario y hallazgos completos
+mateprobe audit --path ./proyecto --maven-resolve          # modo Maven efectivo (opt-in)
+
+mateprobe scan --target ejemplo.com                        # un dominio
+mateprobe scan --target 192.168.1.0/24 --exclude 192.168.1.1
+mateprobe scan --input objetivos.txt --format html --output reporte.html
+
+mateprobe --lang en audit --path ./my-project              # idioma: es | en (o MATEPROBE_LANG)
+```
+
+Funciona con estos ecosistemas:
+
+| Tipo | Archivos | Extracción |
+|------|----------|------------|
+| JavaScript/TypeScript | `package.json`, `package-lock.json`, `yarn.lock` | Workspaces, versión resuelta vs. rango, directas/transitivas |
+| Java | `pom.xml` | Reactor, parents, BOM; modo efectivo con `--maven-resolve` |
+| PHP | `composer.json`, `composer.lock` | Laravel, Symfony y otros |
+| Go | `go.mod`, `go.work` | Módulos y `replace` |
+| WordPress | `wp-includes/version.php`, `wp-content/plugins/*` | Core y plugins |
+| Sitios web | dominios, URLs, IPs, CIDR, rangos | Cabeceras, cookies, `<meta>`, recursos HTML, firmas |
+
+## Qué obtenés
+
+**Avisos únicos** - uno por aviso, con los alias CVE/GHSA unificados y sus ocurrencias (servicio, ámbito, lockfile, vía).
+
+**Evaluación local de versiones** - la decisión *dentro / fuera del rango* se toma en tu máquina; a la API solo viaja ecosistema + nombre del paquete, nunca versiones, rutas ni archivos.
+
+**Prioridad determinista** - certeza → explotación conocida (CISA KEV) → severidad → EPSS → uso en producción → CVSS. Lo que falta se muestra como «no disponible», nunca como 0.
+
+**Cobertura honesta** - todo lo que no se pudo analizar aparece con su motivo. El informe nunca afirma que un proyecto sea seguro.
+
+**Privacidad** - no se guardan valores de cookies ni tokens, las URLs ocultan credenciales y no se carga el `.env` del proyecto auditado.
+
+Cada tecnología de `scan` se etiqueta `declared`, `signature` o `inferred`, con su `confidence`: siempre sabés qué se observó y qué se dedujo.
+
+## Stack
+
+Go + wappalyzergo + `net/http`. Un binario estático, sin servidor, corre completamente en local (`scan` no envía nada a terceros; `login` y `audit` solo hablan con DayZeroHub).
+
+---
+
+# Referencia
+
+## Uso detallado
 
 ```bash
 mateprobe scan --target ejemplo.com
