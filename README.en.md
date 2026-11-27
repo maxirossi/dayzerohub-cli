@@ -284,6 +284,28 @@ Without `--env-file`, the CLI tries to read `./.env` **in the current directory*
 The personal key obtained through `login` works with the technical API. The optional `news_api_key` is for the editorial feed; omitting it does not prevent the technical report. For non-interactive runs, configure both the key and report format beforehand.
 
 <details>
+<summary>New: audit your machine too (<code>--host</code>)</summary>
+
+With `--host`, the CLI also inventories the machine it runs on and matches it against DayZeroHub advisories:
+
+```bash
+mateprobe audit --path "./my-project" --host --format html --open
+```
+
+| System | What is detected | Advisories |
+| --- | --- | --- |
+| **Linux** | Distribution (`/etc/os-release`), running kernel (package version via `dpkg-query` on Ubuntu/Debian), Chrome, Chromium and Firefox | Ubuntu and Debian kernel (OSV, `dpkg` comparison against your own distro only) and Chrome (NVD). |
+| **macOS** | Version (`sw_vers`), Chrome and Firefox in `/Applications` | macOS through NVD; coverage grows as the catalog collects it. |
+| **Windows** | Build branch and revision (`ver` and the registry; Windows Server is told apart), Chrome and Firefox | Windows 10/11 and Server through MSRC (fixed build per branch). |
+
+- Only **ecosystem and name** are sent to the catalog (`os`/`application` + `ubuntu`, `chrome`…); versions are compared **locally**.
+- Only components whose ecosystem the catalog declares are queried; the rest is reported as "not covered", never as "no advisories".
+- Advisories for another platform (for example "Chrome on Android") or another distribution do not apply to your machine.
+- The report adds a **Host environment** section. Nothing runs besides `--version`, `sw_vers`, `ver`, `dpkg-query` and read-only Windows registry queries.
+
+</details>
+
+<details>
 <summary>Audit options reference</summary>
 
 | Option | Purpose |
@@ -300,6 +322,7 @@ The personal key obtained through `login` works with the technical API. The opti
 | `--no-default-excludes` | Disable default exclusions; `.git` is never traversed. |
 | `--ignore-git-index` | Do not use the Git index to identify tracked files. |
 | `--follow-symlinks` | Follow links within the audited root, without cycles. |
+| `--host` | Include the machine (OS, kernel, browsers) in the inventory and matching. |
 
 Exclusion precedence: defaults → `.gitignore` → `--exclude` → `--include`. To see all options available in your version:
 

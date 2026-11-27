@@ -284,6 +284,28 @@ Sin `--env-file`, se intenta leer `./.env` **del directorio actual**. No se busc
 La clave personal de `login` sirve para la API técnica. `news_api_key` es opcional y corresponde al feed editorial; su ausencia no impide el informe técnico. En una ejecución sin terminal interactiva, configurá la clave y el formato de antemano.
 
 <details>
+<summary>Novedad: auditar también tu equipo (<code>--host</code>)</summary>
+
+Con `--host`, además del proyecto, se inventaría el equipo donde corrés el CLI y se cruza con los avisos de DayZeroHub:
+
+```bash
+mateprobe audit --path "./mi-proyecto" --host --format html --open
+```
+
+| Sistema | Qué se detecta | Avisos |
+| --- | --- | --- |
+| **Linux** | Distribución (`/etc/os-release`), kernel en ejecución (versión del paquete con `dpkg-query` en Ubuntu/Debian), Chrome, Chromium y Firefox | Kernel de Ubuntu y Debian (OSV, comparación `dpkg` solo contra tu distro) y Chrome (NVD). |
+| **macOS** | Versión (`sw_vers`), Chrome y Firefox en `/Applications` | macOS por NVD; la cobertura se amplía a medida que el catálogo la recolecta. |
+| **Windows** | Rama de build y revisión (`ver` y registro; distingue Windows Server), Chrome y Firefox | Windows 10/11 y Server por MSRC (build corregido por rama). |
+
+- Al catálogo se envían **solo ecosistema y nombre** (`os`/`application` + `ubuntu`, `chrome`…); las versiones se comparan **localmente**.
+- Solo se consultan los componentes cuyo ecosistema declara el catálogo; el resto figura como «no cubierto», nunca como «sin avisos».
+- Los avisos de otra plataforma (por ejemplo «Chrome en Android») o de otra distribución no se aplican a tu equipo.
+- El informe agrega la sección **Entorno del equipo**. No se ejecuta nada fuera de `--version`, `sw_vers`, `ver`, `dpkg-query` y consultas de solo lectura al registro de Windows.
+
+</details>
+
+<details>
 <summary>Referencia de opciones de auditoría</summary>
 
 | Opción | Uso |
@@ -300,6 +322,7 @@ La clave personal de `login` sirve para la API técnica. `news_api_key` es opcio
 | `--no-default-excludes` | Desactivar exclusiones predeterminadas; `.git` nunca se recorre. |
 | `--ignore-git-index` | No usar el índice de Git para reconocer archivos trackeados. |
 | `--follow-symlinks` | Seguir enlaces dentro de la raíz auditada, sin ciclos. |
+| `--host` | Incluir el equipo (SO, kernel, navegadores) en el inventario y el cruce. |
 
 Precedencia de exclusiones: predeterminadas → `.gitignore` → `--exclude` → `--include`. Para consultar todas las opciones disponibles en tu versión:
 
