@@ -94,7 +94,23 @@ func TestCollectWindows(t *testing.T) {
 		`reg query HKLM\SOFTWARE\Mozilla\Mozilla Firefox /v CurrentVersion`: "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\Mozilla Firefox\r\n    CurrentVersion    REG_SZ    161.0 (x64 es-AR)\r\n",
 	})}
 	check(t, versions(t, Collect(context.Background(), sys)),
-		map[string]string{"os/windows": "10.0.22631.4460", "application/chrome": "131.0.6778.85", "application/firefox": "161.0"})
+		map[string]string{"os/windows-22631": "10.0.22631.4460", "application/chrome": "131.0.6778.85", "application/firefox": "161.0"})
+}
+
+func TestCollectWindowsUBRFromRegistry(t *testing.T) {
+	sys := System{GOOS: "windows", Run: fakeRun(map[string]string{
+		"cmd /c ver": "Microsoft Windows [Version 10.0.19045]\r\n",
+		`reg query HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion /v UBR`: "    UBR    REG_DWORD    0x1b58\r\n",
+	})}
+	check(t, versions(t, Collect(context.Background(), sys)), map[string]string{"os/windows-19045": "10.0.19045.7000"})
+}
+
+func TestCollectWindowsServer(t *testing.T) {
+	sys := System{GOOS: "windows", Run: fakeRun(map[string]string{
+		"cmd /c ver": "Microsoft Windows [Version 10.0.26100.4000]\r\n",
+		`reg query HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion /v InstallationType`: "    InstallationType    REG_SZ    Server\r\n",
+	})}
+	check(t, versions(t, Collect(context.Background(), sys)), map[string]string{"os/windows-server-26100": "10.0.26100.4000"})
 }
 
 func TestUnsupportedOS(t *testing.T) {

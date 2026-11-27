@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -47,6 +48,7 @@ func run(ctx context.Context, name string, args ...string) (string, error) {
 	return string(out), err
 }
 
+var ubrRe = regexp.MustCompile(`UBR\s+REG_DWORD\s+0x([0-9a-fA-F]+)`)
 var versionRe = regexp.MustCompile(`\d+(?:\.\d+){1,3}`)
 
 // probe es una forma de obtener la versión de una aplicación.
@@ -168,11 +170,29 @@ func collectDarwin(ctx context.Context, sys System) Result {
 func collectWindows(ctx context.Context, sys System) Result {
 	var r Result
 	out, err := sys.Run(ctx, "cmd", "/c", "ver")
-	if v := versionRe.FindString(out); err == nil && v != "" {
-		r.Components = append(r.Components, component("windows", inventory.EcoOS, inventory.KindOS, v, "cmd /c ver"))
-	} else {
+	v := versionRe.FindString(out)
+	parts := strings.Split(v, ".")
+	if err != nil || len(parts) < 3 {
 		r.Limitations = append(r.Limitations, "no se pudo obtener la versión de Windows (ver)")
+		return r
 	}
+	if len(parts) == 3 { // sin revisión (UBR): se completa desde el registro (REG_DWORD en hexadecimal)
+		if o, err := sys.Run(ctx, "reg", "query", `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion`, "/v", "UBR"); err == nil {
+			if m := ubrRe.FindStringSubmatch(o); m != nil {
+				if n, err := strconv.ParseUint(m[1], 16, 32); err == nil {
+					v += "." + strconv.FormatUint(n, 10)
+				}
+			}
+		}
+	}
+	// La identidad es la rama de build (windows-26100; windows-server-26100 en Windows Server, que numera distinto las
+	// revisiones corregidas): MSRC publica el build corregido por rama.
+	name := "windows-" + parts[2]
+	if o, err := sys.Run(ctx, "reg", "query", `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion`, "/v", "InstallationType"); err == nil &&
+		strings.Contains(strings.ToLower(o), "server") {
+		name = "windows-server-" + parts[2]
+	}
+	r.Components = append(r.Components, component(name, inventory.EcoOS, inventory.KindOS, v, "cmd /c ver"))
 	return r
 }
 
