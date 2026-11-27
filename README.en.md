@@ -26,7 +26,7 @@ mateprobe --lang en audit --path "./my-project" --format html --open
 
 You need the executable for your system, a verified DayZeroHub account, and an Internet connection to authorize your machine and retrieve advisories. Files are analyzed on your machine.
 
-The blocks below install **v0.1.0** from [Releases](https://github.com/maxirossi/dayzerohub-cli/releases/latest), verify SHA-256 before installation, and do not require administrator privileges. Choose your system:
+The blocks below install **v0.2.0** from [Releases](https://github.com/maxirossi/dayzerohub-cli/releases/latest), verify SHA-256 before installation, and do not require administrator privileges. Choose your system:
 
 <details>
 <summary><strong>Linux / macOS — copy and paste into Bash or Zsh</strong></summary>
@@ -36,7 +36,7 @@ Detects 64-bit Intel/AMD or ARM64 and installs the command at `~/.local/bin/mate
 ```bash
 (
   set -eu
-  dzh_version="0.1.0"
+  dzh_version="0.2.0"
   case "$(uname -s)" in
     Linux) dzh_os="linux" ;;
     Darwin) dzh_os="darwin" ;;
@@ -84,7 +84,7 @@ Detects x64 or ARM64, installs under `%LOCALAPPDATA%\mateprobe`, and adds the co
 ```powershell
 & {
   $ErrorActionPreference = "Stop"
-  $DzhVersion = "0.1.0"
+  $DzhVersion = "0.2.0"
   $DzhMachine = $env:PROCESSOR_ARCHITECTURE
   if ($env:PROCESSOR_ARCHITEW6432) { $DzhMachine = $env:PROCESSOR_ARCHITEW6432 }
   $DzhArch = switch ($DzhMachine) {
@@ -128,21 +128,21 @@ Detects x64 or ARM64, installs under `%LOCALAPPDATA%\mateprobe`, and adds the co
 <details>
 <summary>Manual download: choose an executable</summary>
 
-These filenames correspond to v0.1.0. `amd64` is for 64-bit Intel and AMD processors; `arm64` is for 64-bit ARM processors.
+These filenames correspond to v0.2.0. `amd64` is for 64-bit Intel and AMD processors; `arm64` is for 64-bit ARM processors.
 
 | System | 64-bit Intel / AMD | ARM64 |
 | --- | --- | --- |
-| Linux | [Download](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-linux-amd64) | [Download](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-linux-arm64) |
-| macOS | [Intel](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-darwin-amd64) | [Apple Silicon](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-darwin-arm64) |
-| Windows | [Download .exe](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-windows-amd64.exe) | [Download .exe](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/mateprobe-0.1.0-windows-arm64.exe) |
+| Linux | [Download](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.2.0/mateprobe-0.2.0-linux-amd64) | [Download](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.2.0/mateprobe-0.2.0-linux-arm64) |
+| macOS | [Intel](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.2.0/mateprobe-0.2.0-darwin-amd64) | [Apple Silicon](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.2.0/mateprobe-0.2.0-darwin-arm64) |
+| Windows | [Download .exe](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.2.0/mateprobe-0.2.0-windows-amd64.exe) | [Download .exe](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.2.0/mateprobe-0.2.0-windows-arm64.exe) |
 
-Compare the file's SHA-256 with its entry in [SHA256SUMS](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.1.0/SHA256SUMS) before running it: use `sha256sum FILE` on Linux, `shasum -a 256 FILE` on macOS, or `Get-FileHash FILE -Algorithm SHA256` in PowerShell. Then rename it to `mateprobe` (`mateprobe.exe` on Windows). On Linux/macOS, run `chmod +x mateprobe` to make it executable.
+Compare the file's SHA-256 with its entry in [SHA256SUMS](https://github.com/maxirossi/dayzerohub-cli/releases/download/v0.2.0/SHA256SUMS) before running it: use `sha256sum FILE` on Linux, `shasum -a 256 FILE` on macOS, or `Get-FileHash FILE -Algorithm SHA256` in PowerShell. Then rename it to `mateprobe` (`mateprobe.exe` on Windows). On Linux/macOS, run `chmod +x mateprobe` to make it executable.
 
 Run it from that directory with `./mateprobe --version` or `.\mateprobe.exe --version`, respectively. Use the same prefix for the commands in this guide if you have not added it to your `PATH`.
 
 </details>
 
-> Release v0.1.0 provides binaries for all three systems, but notes that macOS and Windows have not yet been tested. macOS binaries are unsigned; your system may require a review before running them.
+> Release v0.2.0 provides binaries for all three systems, but notes that macOS and Windows have not yet been tested. macOS binaries are unsigned; your system may require a review before running them.
 
 ## First report
 
@@ -354,7 +354,7 @@ Each technology states how it was detected (`declared`, `signature` or `inferred
 | --- | --- |
 | Advisory lookup | The ecosystem and name of each queried package. Version comparison happens locally; versions, paths, and file contents are not uploaded. |
 | `login` | An installation name based on `user@host` to identify the authorization. You enter your password on the portal, not in the CLI. |
-| Usage summary | On `main`, after v0.1.0: CLI version, OS/architecture, status, counts, and an identifier derived from a hash of the path. Associated with your account when using a personal key. |
+| Usage summary | On `main`, after v0.2.0: CLI version, OS/architecture, status, counts, and an identifier derived from a hash of the path. Associated with your account when using a personal key. |
 
 The usage summary does not contain package names, plaintext paths, dependency versions, or individual advisories. The server receives your IP and may derive your country. **This is separate from advisory lookups, which do send package names.**
 
@@ -379,7 +379,7 @@ To invalidate the key on the server as well, revoke it under **Technical API** i
 | Login code expired | Run `mateprobe login` again and confirm the current code. |
 | API key rejected / HTTP 401 | Check whether `api_key` in your environment or configuration file overrides the saved key. Correct it or authorize again with `mateprobe login`. |
 | Missing configuration in CI or with redirected output | Supply `api_key` through your environment's secret settings and add `--format html` or `--format md`. |
-| Editorial feed skipped | It is optional. In v0.1.0, skipping it can return code `2` even when the technical query completed. Set `news_api_key` if you need it. |
+| Editorial feed skipped | It is optional. In v0.2.0, skipping it can return code `2` even when the technical query completed. Set `news_api_key` if you need it. |
 | `--open` does not launch a browser | The report is still saved. Open the printed path; on Linux, check that `xdg-open` and a graphical session are available. |
 | Partial report / “Undetermined” | Review coverage, unresolved versions, and query errors before drawing conclusions. |
 
@@ -389,7 +389,7 @@ To invalidate the key on the server as well, revoke it under **Technical API** i
 | --- | --- |
 | `0` | Query completed; **vulnerabilities and coverage limitations may still exist**. |
 | `1` | Usage, configuration, read, or write error. |
-| `2` | Partial report due to an incomplete query; in v0.1.0 this also occurs when the editorial feed is skipped. |
+| `2` | Partial report due to an incomplete query; in v0.2.0 this also occurs when the editorial feed is skipped. |
 | `130` | Interrupted with Ctrl+C; interruption during inventory may leave no report. |
 
 The exit code describes execution status, not the severity of findings. It does not provide a vulnerability threshold for blocking CI.
