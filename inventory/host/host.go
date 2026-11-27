@@ -126,6 +126,10 @@ func Collect(ctx context.Context, sys System) Result {
 		return r
 	}
 	r.Components = append(r.Components, collectApps(ctx, sys)...)
+	plat := map[string]string{"linux": "linux", "darwin": "macos", "windows": "windows"}[sys.GOOS]
+	for i := range r.Components { // plataforma del equipo: los avisos de otra plataforma (p. ej. «Chrome en Android») no aplican
+		r.Components[i].Notes = append(r.Components[i].Notes, "platform="+plat)
+	}
 	return r
 }
 

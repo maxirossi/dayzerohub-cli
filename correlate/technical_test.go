@@ -316,3 +316,18 @@ func TestApplicableToLocalDistro(t *testing.T) {
 		t.Error("distro local o fila sin distro sí aplican")
 	}
 }
+
+func TestPlatformMatches(t *testing.T) {
+	c := inventory.Component{Notes: []string{"platform=linux"}}
+	for _, tc := range []struct {
+		row  any
+		want bool
+	}{{nil, true}, {[]any{"windows"}, false}, {[]any{"android", "ios"}, false}, {[]any{"Linux", "windows"}, true}} {
+		if got := platformMatches(tc.row, c); got != tc.want {
+			t.Errorf("%v: %v", tc.row, got)
+		}
+	}
+	if !platformMatches([]any{"windows"}, inventory.Component{}) {
+		t.Error("sin plataforma local no se filtra")
+	}
+}

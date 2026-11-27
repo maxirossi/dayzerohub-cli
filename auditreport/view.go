@@ -604,6 +604,13 @@ func pickFixed(eco string, fixed []string) string {
 func suggest(o inventory.Component, eco, fixed string, subs map[string]inventory.Subproject) SuggView {
 	sp := subs[o.Subproject]
 	switch {
+	case o.Subproject == "(host)" && (o.Ecosystem == inventory.EcoApp || o.Ecosystem == inventory.EcoOS) && fixed != "" && fixed != notReportedText():
+		if o.Ecosystem == inventory.EcoApp {
+			return SuggView{Where: o.Subproject, Note: fmt.Sprintf(i18n.Tr("Actualizá %s a %s o superior (actualización de la propia aplicación o gestor de paquetes del sistema).", "Update %s to %s or later (the application's own updater or the system package manager)."), o.Name, fixed)}
+		}
+		return SuggView{Where: o.Subproject, Note: fmt.Sprintf(i18n.Tr("Aplicá las actualizaciones del sistema (gestor de paquetes, Windows Update o Software Update) hasta llegar a %s o superior; en Linux puede requerir reiniciar.", "Apply the system updates (package manager, Windows Update or Software Update) up to %s or later; on Linux a reboot may be required."), fixed)}
+	case o.Subproject == "(host)" && (fixed == "" || fixed == notReportedText()):
+		return SuggView{Where: o.Subproject, Note: i18n.Tr("La fuente no informa una versión corregida (la distro puede no haber publicado aún un parche): revisá el aviso.", "The source does not report a fixed version (the distro may not have released a patch yet): review the advisory.")}
 	case o.Relation == inventory.RelTransitive:
 		via := i18n.Tr("la dependencia directa que la incluye", "the direct dependency that includes it")
 		if len(o.Via) > 0 {

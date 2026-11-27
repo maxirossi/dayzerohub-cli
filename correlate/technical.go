@@ -73,6 +73,30 @@ func distroMatches(rowDistro string, c inventory.Component) bool {
 	return false
 }
 
+// platformMatches indica si una fila con plataformas (p. ej. ["windows"]) aplica a la plataforma del equipo
+// (nota "platform=linux|macos|windows"). Sin plataformas en la fila, o sin plataforma local conocida, aplica.
+func platformMatches(row any, c inventory.Component) bool {
+	list, _ := row.([]any)
+	if len(list) == 0 {
+		return true
+	}
+	local := ""
+	for _, n := range c.Notes {
+		if v, ok := strings.CutPrefix(n, "platform="); ok {
+			local = v
+		}
+	}
+	if local == "" {
+		return true
+	}
+	for _, p := range list {
+		if s, _ := p.(string); strings.EqualFold(s, local) {
+			return true
+		}
+	}
+	return false
+}
+
 // applicableToLocalDistro es false si todas las filas del aviso para el componente son de distros distintas a la local.
 func applicableToLocalDistro(c inventory.Component, adv dzh.SecAdvisory) bool {
 	seen := false
@@ -81,7 +105,7 @@ func applicableToLocalDistro(c inventory.Component, adv dzh.SecAdvisory) bool {
 			continue
 		}
 		seen = true
-		if d, _ := a.Extra["distro"].(string); distroMatches(d, c) {
+		if d, _ := a.Extra["distro"].(string); distroMatches(d, c) && platformMatches(a.Extra["platforms"], c) {
 			return true
 		}
 	}
